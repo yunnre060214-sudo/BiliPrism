@@ -96,6 +96,7 @@ export class FeedApp {
     }));
     if (!shown.length && !this.loading) this.list.append(h('div',{class:'ms-empty'},h('p',{},this.wantedOnly && !c.wantedUsers.length ? '在设置或动态卡片菜单中添加特别关注 UP 主' : this.items.length ? '当前动态均被筛选条件隐藏' : '这里还空着')));
     this.applyLinks(this.list);
+    this.renderUps(this.ups);
   }
 
   private render(): void {
@@ -114,8 +115,9 @@ export class FeedApp {
     this.sentinel = h('div', { class: 'sentinel' });
     this.more = h('button',{type:'button',class:'ghost moment-more',onclick:()=>this.load()},'加载更多');
     this.wantedButton=h('button',{type:'button',class:'ghost small', 'aria-pressed':'false',onclick:()=>{
-      this.wantedOnly=!this.wantedOnly;this.host=0;
-      this.wantedButton.setAttribute('aria-pressed',String(this.wantedOnly));this.renderUps(this.ups);this.paintCards();this.fill();
+      const fromHost=!!this.host;this.wantedOnly=!this.wantedOnly;this.host=0;
+      this.wantedButton.setAttribute('aria-pressed',String(this.wantedOnly));this.renderUps(this.ups);
+      if(fromHost)this.reload();else{this.paintCards();this.fill();}
     }},'特别关注');
     const refresh=h('button',{type:'button',class:'ghost small','aria-label':'刷新动态',onclick:()=>this.reload()},'刷新');
     const center = h('section', { class: 'fd-main' },
@@ -176,6 +178,12 @@ export class FeedApp {
 
   private renderUps(ups: Up[]): void {
     this.ups=ups;
+    const pinned=this.shell.settings.moments.pinnedUsers;
+    const candidates=new Map(ups.map(u=>[u.mid,u]));
+    for(const post of this.items) if(matchesUser(pinned,post.mid,post.author)&&!candidates.has(post.mid))
+      candidates.set(post.mid,{mid:post.mid,name:post.author,face:post.face,fresh:false});
+    for(const value of pinned) if(/^\d+$/.test(value)&&Number.isSafeInteger(Number(value))&&Number(value)>0&&!candidates.has(Number(value)))
+      candidates.set(Number(value),{mid:Number(value),name:`UID ${value}`,face:'',fresh:false});
     const mk = (mid: number, name: string, img: Node, fresh = false) => {
       const b = h('button', { class: 'fd-up', type: 'button', title: fresh ? `${name} · 有新动态` : name, 'aria-pressed': String(mid === this.host && !this.wantedOnly) }, h('span', { class: 'fd-up-face' }, img), h('span', { class: 'fd-up-name' }, name));
       b.dataset.mid = String(mid);
@@ -190,8 +198,8 @@ export class FeedApp {
     };
     this.strip.replaceChildren(
       mk(0, '全部动态', h('span', { class: 'fd-up-all' }, icon(ICONS.moments))),
-      ...sortUps(ups,this.shell.settings.moments.pinnedUsers).slice(0, 50).map((u) => {
-        const b=mk(u.mid,u.name,face(u.face,'',96),u.fresh);
+      ...sortUps([...candidates.values()],pinned).slice(0, 50).map((u) => {
+        const b=mk(u.mid,u.name,u.face?face(u.face,'',96):h('span',{class:'fd-up-all'},u.name.slice(0,1)),u.fresh);
         if(matchesUser(this.shell.settings.moments.pinnedUsers,u.mid,u.name)) b.classList.add('pinned');
         return b;
       }));

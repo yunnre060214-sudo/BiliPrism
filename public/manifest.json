@@ -2,8 +2,8 @@
   "manifest_version": 3,
   "name": "BiliPrism 映棱",
   "short_name": "BiliPrism",
-  "version": "0.1.4",
-  "description": "MARGIN 风格界面、推荐过滤、原生播放器增强与字幕导出。",
+  "version": "0.1.5",
+  "description": "MARGIN 风格界面、清晰文字、原生播放器增强、树状评论与可定制动态页。",
   "icons": {
     "16": "icons/16.png",
     "48": "icons/48.png",
