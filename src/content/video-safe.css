@@ -1,0 +1,11 @@
+/* 播放页兼容模式：原生播放器、推荐、评论保留 B 站布局与绘制方式。
+ * 不隐藏通用上报类，不改视频层背景、尺寸、mask、isolation 或 overflow。
+ */
+#margin-watch-top{position:fixed;top:0;left:0;right:0;z-index:10000;height:72px}
+#margin-watch-top[hidden]{display:none!important}
+html.margin-watch #biliMainHeader,html.margin-watch .bili-header.fixed-header{display:none!important}
+html.margin-watch .video-container-v1{padding-top:96px!important}
+html.margin-watch{--m-ink:#17181a;--m-canvas:#f5f4f1;background:var(--m-canvas)}
+html.margin-watch[data-margin-theme="dark"]{--m-ink:#ededee;--m-canvas:#111112;color-scheme:dark}
+html.margin-watch body{background:var(--m-canvas);color:var(--m-ink)}
+#margin-bg{position:fixed;inset:0;z-index:-1;pointer-events:none}

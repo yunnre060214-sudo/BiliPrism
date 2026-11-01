@@ -115,7 +115,7 @@ function stubHtml(u) {
   if (/\/opus\/\d/.test(u)) return opusHtml();
   return `<!doctype html><html lang="zh-CN"><head><meta charset="utf-8"><title>哔哩哔哩 (゜-゜)つロ 干杯~-bilibili</title></head><body>
 <div id="app">${watch ? `<div class="video-container-v1"><div class="left-container"><div class="video-info-container"><h1 class="video-title">离线冒烟测试视频</h1></div>
-<div id="bilibili-player" style="width:100%;aspect-ratio:16/9;background:#000"></div><div id="commentapp"></div></div><div class="right-container"><div id="danmukuBox"></div><div class="recommend-list-v1"></div></div></div>`
+<div class="ad-report"><div id="bilibili-player" style="width:100%;aspect-ratio:16/9;background:#000"></div></div><div id="commentapp"></div></div><div class="right-container"><div id="danmukuBox"></div><div class="recommend-list-v1"></div></div></div>`
     : '<div class="bili-header"></div><main class="native">原版页面</main>'}</div></body></html>`;
 }
 

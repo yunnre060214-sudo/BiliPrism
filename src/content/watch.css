@@ -58,7 +58,7 @@ html.margin-skin .bili-header.fixed-header { display: none !important; }
 html.margin-watch .video-container-v1 { padding-top: 96px !important; }
 
 /* 广告与推广 */
-html.margin-watch .ad-report, html.margin-watch .slide-ad-exp, html.margin-watch .video-card-ad-small,
+html.margin-watch .slide-ad-exp, html.margin-watch .video-card-ad-small,
 html.margin-watch .ad-floor-exp, html.margin-watch #slide_ad, html.margin-watch .pop-live-small-mode,
 html.margin-watch .video-page-game-card-small, html.margin-watch .video-page-special-card-small,
 html.margin-watch .activity-m-v1, html.margin-watch .reply-notice, html.margin-watch .vcd { display: none !important; }

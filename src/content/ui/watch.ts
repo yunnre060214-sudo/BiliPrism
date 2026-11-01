@@ -104,7 +104,7 @@ export class WatchSkin {
     ]) : null;
     this.app = h('div', { class: 'app wt', 'data-bg': 'off' }, this.head.el, quick?.el ?? null, createScrollRuler(), this.panel.sheet.el, this.fav.el, palette.el, later.el, cm.el);
     root.append(this.app);
-    if (isWatch) skinComments();
+    // 播放页保留原生评论样式，避免穿透组件内部结构。
     const lg = filtersIn(root);
     this.head.glass.forEach((g) => attachGlass(g, lg));
     attachGlass(this.head.thumb, lg, { blur: 2, strength: 0.4 });
@@ -114,7 +114,7 @@ export class WatchSkin {
 
     this.applyTheme(false);
     this.media.addEventListener('change', () => this.applyTheme(false));
-    if (isWatch) { this.watchScreen(); startTriple(); podProgress(); }
+    if (isWatch) { this.watchScreen(); }
   }
 
   update(s: Settings): void {

@@ -46,6 +46,10 @@ try {
   await open();
   await check('扩展真实加载、工具条唯一、没有光学位移滤镜和 GPU 背景', async () => {
     assert.equal(await tools().count(), 1);
+    assert.equal(await media().evaluate(el => {
+      for (let n = el.parentElement; n; n = n.parentElement) if (getComputedStyle(n).display === 'none') return false;
+      return document.getElementById('bilibili-player').getBoundingClientRect().height > 200;
+    }), true, '播放器祖先包含 ad-report 时仍应可见且保留高度');
     assert.equal(await page.locator('feDisplacementMap').count(), 0);
     assert.equal(await page.evaluate(() => [...document.querySelectorAll('*')].flatMap(n => n.shadowRoot ? [...n.shadowRoot.querySelectorAll('.bg canvas, feDisplacementMap')] : []).length), 0);
   });

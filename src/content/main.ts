@@ -9,6 +9,7 @@ import { injectFonts } from './fonts';
 import { muteNative, setGuard, guardEnabled } from './native-guard';
 import type { SkinKind } from './ui/watch';
 import watchCss from './watch.css?inline';
+import safeVideoCss from './video-safe.css?inline';
 import pagesCss from './pages.css?inline';
 import detailCss from './detail.css?inline';
 
@@ -87,7 +88,7 @@ function skinStyle(kind: SkinKind, theme: string): HTMLStyleElement {
   if (!st) {
     st = document.createElement('style');
     st.id = 'margin-watch-css';
-    st.textContent = watchCss + '\n' + pagesCss + '\n' + detailCss;
+    st.textContent = kind === 'watch' ? safeVideoCss : watchCss + '\n' + pagesCss + '\n' + detailCss;
     de.append(st);
   }
   return st;
