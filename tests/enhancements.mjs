@@ -46,6 +46,7 @@ try {
   await open();
   await check('扩展真实加载、工具条唯一、没有光学位移滤镜和 GPU 背景', async () => {
     assert.equal(await tools().count(), 1);
+    assert.equal(await tools().evaluate(el => el.parentElement === document.documentElement && !document.getElementById('app').contains(el)), true, '增强工具条必须位于原生应用树之外');
     assert.equal(await media().evaluate(el => {
       for (let n = el.parentElement; n; n = n.parentElement) if (getComputedStyle(n).display === 'none') return false;
       return document.getElementById('bilibili-player').getBoundingClientRect().height > 200;

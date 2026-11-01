@@ -81,7 +81,7 @@ export async function startPlayerEnhancements(): Promise<void> {
   const say = (message: string) => { status.textContent = message; };
   const makePanel = () => {
     const host = h('div', { id: 'biliprism-player-tools' }), root = host.attachShadow({ mode: 'open' });
-    root.append(h('style', {}, ':host{display:block;margin:10px 0;font:12px/1.5 system-ui;color:var(--m-ink,#777)}.tools{display:flex;align-items:center;gap:8px;flex-wrap:wrap}button,select{font:inherit;color:inherit;background:transparent;border:1px solid #8885;border-radius:9px;padding:6px 10px}button{cursor:pointer}button:hover{border-color:#00aeec}button:focus-visible,select:focus-visible{outline:2px solid #00aeec}button[aria-pressed=true]{color:#00aeec}button:disabled{opacity:.5}select[hidden],button[hidden]{display:none}.tag{color:#00aeec;font-weight:600}[role=status]{flex-basis:100%;font-size:11px}'));
+    root.append(h('style', {}, ':host{position:fixed;right:20px;bottom:20px;z-index:10001;display:block;max-width:calc(100vw - 40px);padding:10px 12px;border:1px solid #8884;border-radius:14px;box-shadow:0 4px 20px #0002;background:#fffffff2;color:#252830;font:12px/1.5 system-ui;backdrop-filter:blur(12px)}:host([hidden]){display:none}:host([data-theme=dark]){background:#20232af2;color:#e6e8ef}.tools{display:flex;align-items:center;gap:8px;flex-wrap:wrap}button,select{font:inherit;color:inherit;background:transparent;border:1px solid #8885;border-radius:9px;padding:6px 10px}button{cursor:pointer}button:hover{border-color:#00aeec}button:focus-visible,select:focus-visible{outline:2px solid #00aeec}button[aria-pressed=true]{color:#00aeec}button:disabled{opacity:.5}select[hidden],button[hidden]{display:none}.tag{color:#00aeec;font-weight:600}[role=status]{flex-basis:100%;font-size:11px}'));
     const wide = h('button', { type: 'button', 'aria-pressed': String(settings.player.wide), onclick: () => {
       void saveSettings({ player: { ...settings.player, wide: !settings.player.wide } }).catch(e => say(String(e)));
     } }, '宽屏');
@@ -131,11 +131,13 @@ export async function startPlayerEnhancements(): Promise<void> {
     }
     if (anchor !== nextAnchor || !panel?.isConnected) {
       panel?.remove(); panel = null; anchor = nextAnchor;
-      if (anchor && settings.enabled) { panel = makePanel(); anchor.after(panel); }
+      if (anchor && settings.enabled) { panel = makePanel(); document.documentElement.append(panel); }
     }
     document.documentElement.classList.toggle('biliprism-wide', route && settings.enabled && settings.player.wide && !document.fullscreenElement);
     if (panel && !settings.enabled) { panel.remove(); panel = null; }
     if (panel) {
+      panel.dataset.theme = settings.theme === 'auto' ? (matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light') : settings.theme;
+      panel.hidden = !!document.fullscreenElement || !!anchor?.querySelector('.bpx-player-container[data-screen="web"], .bpx-player-container[data-screen="full"]');
       const root = panel.shadowRoot!;
       root.querySelector('button')?.setAttribute('aria-pressed', String(settings.player.wide));
       const selects = root.querySelectorAll<HTMLSelectElement>('select');
