@@ -58,8 +58,22 @@ export async function expandReplyPages(r: PaginatedRenderer, p: ReplyPages, limi
   rememberPage(r, p);
   p.busy = true; p.stopped = false;
   const interactions = new Map<string, ReplyData>();
+  const observed = new Map<string, { data: ReplyData; action: unknown; like: unknown }>();
   const capture = () => {
-    for (const d of rendered()) interactions.set(replyId(d), { action: d.action, like: d.like });
+    // A reply can receive a local action just before its DOM is replaced.
+    for(const [key,before] of observed) for(const field of ['action','like'] as const)
+      if(before.data[field]!==before[field]&&typeof before.data[field]==='number') {
+        const local=interactions.get(key)!;local[field]=before.data[field];before[field]=before.data[field];
+      }
+    for (const d of rendered()) {
+      const key=replyId(d), before=observed.get(key);
+      const local=interactions.get(key) ?? { action: d.action, like: d.like };
+      // A new data object came from native pagination and may be stale. Only
+      // interaction changes on the same rendered object replace our local state.
+      if(before?.data===d) for(const field of ['action','like'] as const)
+        if(before[field]!==d[field]&&typeof d[field]==='number') local[field]=d[field];
+      interactions.set(key,local);observed.set(key,{data:d,action:d.action,like:d.like});
+    }
   };
   capture();
   let loaded = 0;

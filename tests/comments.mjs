@@ -87,7 +87,7 @@ try{
   await replies.getByRole('button',{name:/全部展开楼层|继续展开剩余楼层/}).click();
   await page.waitForFunction(()=>window.paginationRenderer.list.length===4);
   assert.equal(await page.evaluate(()=>window.paginationRenderer.list.find(d=>d.rpid_str==='14').like),9);
-  assert.equal(await page.locator('#native-reply-14').getAttribute('data-bp-reply-depth'),'2');
+  await page.waitForFunction(()=>document.querySelector('bili-comments').shadowRoot.querySelector('bili-comment-thread-renderer').shadowRoot.querySelector('bili-comment-replies-renderer').shadowRoot.querySelector('#native-reply-14').dataset.bpReplyDepth==='2');
   await replies.getByRole('button',{name:'继续展开剩余楼层',exact:true}).click();
   await replies.getByRole('status').filter({hasText:'模拟原生分页失败'}).waitFor();
   assert.equal(await page.evaluate(()=>window.paginationRenderer.list.length),4);

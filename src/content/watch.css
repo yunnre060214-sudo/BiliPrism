@@ -21,8 +21,9 @@ html.margin-skin[data-margin-theme="dark"] {
 html.margin-skin {
   --m-canvas: #f5f4f1; --m-surface: #ffffff; --m-ink: #17181a; --m-muted: #6f7177; --m-faint: #a3a5aa;
   --m-line: rgb(23 24 26 / .09); --m-chip: rgb(23 24 26 / .05); --m-accent: #00aeec;
-  --m-serif: "Instrument Serif", "Margin Serif SC", "Noto Serif SC", "Source Han Serif SC", "Songti SC", serif;
-  --m-mono: "Geist Mono", "Margin Sans SC", ui-monospace, SFMono-Regular, Menlo, monospace;
+  --m-sans: "Segoe UI", "PingFang SC", "Microsoft YaHei", "Noto Sans CJK SC", system-ui, sans-serif;
+  --m-serif: var(--m-sans);
+  --m-mono: var(--m-sans);
   --m-radius: 16px;
 
   --bg1: #ffffff; --bg2: #f5f4f1; --bg3: #efeeea; --bg1_float: #ffffff; --bg2_float: #f1f0ec;

@@ -1,12 +1,12 @@
 # BiliPrism 映棱
 
-Bilibili 网页端增强扩展，面向 Chrome 和 Microsoft Edge。当前版本 **0.1.4**，通过 GitHub Release 提供本地解压安装包。
+Bilibili 网页端增强扩展，面向 Chrome 和 Microsoft Edge。当前版本 **0.1.5**，通过 GitHub Release 提供本地解压安装包。
 
-以 MARGIN 0.39.0 为界面底座，保留首页、推荐、搜索、收藏、稍后再看、足迹及原生播放页适配。全站使用普通高斯模糊，背景使用静态渐变或本地图片，移除了 WebGL / WebGPU 背景与玻璃位移折射。默认关闭天气、开场和封面自动预览，字体直接使用系统字体。
+以 MARGIN 0.39.0 为界面底座，保留首页、推荐、搜索、收藏、稍后再看、足迹及原生播放页适配。界面可选实色面板或普通高斯模糊，背景使用静态渐变或本地图片，移除了 WebGL / WebGPU 背景与玻璃位移折射。默认关闭天气、开场和封面自动预览，字体直接使用系统字体。
 
 ## 下载与使用
 
-1. 在 [Releases](https://github.com/yunnre060214-sudo/BiliPrism/releases) 下载 `BiliPrism-v0.1.4-chromium.zip`，解压到固定文件夹。
+1. 在 [Releases](https://github.com/yunnre060214-sudo/BiliPrism/releases) 下载 `BiliPrism-v0.1.5-chromium.zip`，解压到固定文件夹。
 2. 打开 `chrome://extensions` 或 `edge://extensions`，开启开发者模式。
 3. 选择「加载已解压的扩展程序」，选择含 `manifest.json` 的文件夹。
 4. 停用其他接管 B 站界面的扩展与重复功能脚本，刷新 B 站。
@@ -21,14 +21,17 @@ Bilibili 网页端增强扩展，面向 Chrome 和 Microsoft Edge。当前版本
 - **播放速度记忆**：在 B 站原生播放器调速，下次视频继续使用所选速度；兼容 `video` 和 `bwp-video`。
 - **宽屏布局**：使用原生宽屏按钮或在设置中默认启用。
 - **字幕导出**：按 Ctrl / ⌘ + K，在命令面板选择「导出字幕」，弹窗选择语言与 SRT、TXT 或 JSON，支持分 P。
-- **树状评论**：基于 BewlyCat 的父回复关系、树序与连线几何实现缩进、分支折叠；保留原生回复、翻页和评论节点。设置可随时关闭。
+- **原生深色适配与清晰文字**：补全播放页和评论组件的颜色变量，统一系统无衬线字体；可设置字号、字重、行高、强调色、圆角、实色面板与减少动效。
+- **树状评论**：基于 BewlyCat 的父回复关系、树序与连线几何实现缩进、分支折叠。增加全部展开与收起，通过原生分页顺序加载，默认每批 5 页、可配置 1–10 页；多页去重并保留本地点赞状态。连线显示、宽度和缩进可调整。
+- **BewlyCat 动态页布局**：单/双列动态卡片、可选个人资料/直播/热搜、UP 主列表与置顶、特别关注；支持类型、关键词和 UP 主过滤，自动或手动分页，当前或新标签打开，卡片菜单可直接管理用户。动态详情评论通过原生页面打开。
+- **设置搜索**：设置内直接搜索字号、楼层、动态等选项；新增配置自动补齐，改动实时保存。
 - 设置和足迹 JSON 备份导入、导出；扩展弹窗提供总开关与主题切换。
 
 字幕能力取决于视频是否提供字幕及账号访问权限。扩展仅导出接口已允许访问的字幕。播放、弹幕、清晰度、全屏和评论继续由 B 站原生功能负责。
 
-## 第一版边界
+## 当前移植范围
 
-这是融合工程的首个可运行版本。BewlyCat 的大部分 Vue 功能尚未移植；个人 Userscripts 的完整源码尚未纳入，评论楼层导出、直播与「预言」等功能留待后续接入。本版字幕导出为独立实现，未声称完整移植 vcaptions 或 BiliForge。
+动态页采用 BewlyCat Moments 的布局与上述可配置功能，未整体嵌入其 Vue 应用；其内嵌视频预览、弹窗详情、投票与抽奖等功能尚未移植。个人 Userscripts 的完整源码尚未纳入，评论楼层导出、直播与「预言」等功能留待后续接入。本版字幕导出为独立实现，未声称完整移植 vcaptions 或 BiliForge。
 
 当前验证包含构建、自动化逻辑测试及离线接口夹具下的扩展冒烟测试，真实账号、地区限制及 B 站线上页面变化仍需要本地使用反馈。
 
@@ -41,8 +44,12 @@ npm ci
 npm test
 npm run pack
 npx playwright install --with-deps chromium
-npm run test:smoke
+npm run test:appearance
+npm run test:moments
+npm run test:comments
+npm run test:hydration
 npm run test:enhancements
+npm run test:smoke
 ```
 
 `dist/` 可直接本地加载，`release/` 包含 ZIP 与 SHA-256 校验。推送新的 `package.json` 版本到 main 后，GitHub Actions 会运行验证，为该提交创建版本标签与 Release。不会向浏览器商店提交。

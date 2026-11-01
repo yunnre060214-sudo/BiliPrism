@@ -7,3 +7,4 @@ export { getCommentReplyBranchPath } from '../src/content/comments/geometry';
 export { allowMoment, sortUps } from '../src/content/moments/filter';
 export { mergeReplies } from '../src/content/comments/pagination';
 export { toDyn } from '../src/content/api/dyn';
+export { expandReplyPages } from '../src/content/comments/pagination';

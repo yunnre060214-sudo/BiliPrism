@@ -114,3 +114,12 @@ test('动态映射保留番剧附件和富文本，拒绝非网页跳转', () =>
   const d=m.toDyn({id_str:'12',type:'DYNAMIC_TYPE_PGC',modules:{module_dynamic:{desc:{text:'番剧推荐 @作者',rich_text_nodes:[{text:'番剧推荐',jump_url:'javascript:alert(1)'},{type:'RICH_TEXT_NODE_TYPE_AT',text:'@作者',rid:8}]},major:{pgc:{title:'番剧',cover:'//i0.hdslb.com/test.jpg',jump_url:'//www.bilibili.com/bangumi/play/ep12'}}}}});
   assert.equal(d.attachment.kind,'PGC');assert.match(d.attachment.url,/^https:\/\//);assert.equal(d.segments[0].url,'');assert.equal(d.segments[1].url,'https://space.bilibili.com/8');
 });
+
+test('原生分页原地修改数组时仍可展开，跨页旧数据不覆盖本地点赞', async () => {
+  const initial={rpid_str:'1',action:1,like:9};
+  const r={isConnected:true,list:[initial],currentPage:1,totalPage:2,showPagination:true,showSpinner:false,
+    async handleChangePage(){this.showSpinner=true;initial.like=10;await Promise.resolve();this.currentPage=2;this.list.splice(0,this.list.length,{rpid_str:'1',action:0,like:0},{rpid_str:'2',like:2});this.showSpinner=false;},requestUpdate(){}};
+  const p={pages:new Map(),busy:false,stopped:false};
+  await m.expandReplyPages(r,p,1,()=>true,()=>r.list,()=>{});
+  assert.deepEqual(r.list.map(d=>[d.rpid_str,d.like]),[['1',10],['2',2]]);assert.equal(r.list[0].action,1);assert.equal(p.pages.size,2);assert.equal(p.busy,false);
+});

@@ -32,7 +32,7 @@
   --mono: "Geist Mono", "Margin Sans SC", ui-monospace, SFMono-Regular, Menlo, monospace;
   position: fixed; inset: 0; z-index: 2147483000; overflow-y: auto; overflow-x: hidden;
   background: var(--canvas); color: var(--ink); font: 14px/1.5 var(--sans);
-  -webkit-font-smoothing: antialiased; color-scheme: light; scrollbar-gutter: stable; scrollbar-width: thin; scrollbar-color: color-mix(in srgb, var(--ink) 22%, transparent) transparent;
+  -webkit-font-smoothing: auto; color-scheme: light; scrollbar-gutter: stable; scrollbar-width: thin; scrollbar-color: color-mix(in srgb, var(--ink) 22%, transparent) transparent;
 }
 .app[data-theme="dark"] {
   --shadow-rgb: 0 0 0; --ring: 0 0 0 var(--hair) rgb(255 255 255 / .12);
@@ -282,7 +282,7 @@ button { font: inherit; color: inherit; background: none; border: 0; padding: 0;
   flex: none;
   vertical-align: top;
   font-family: var(--sans);
-  -webkit-font-smoothing: antialiased;
+  -webkit-font-smoothing: auto;
   -webkit-tap-highlight-color: transparent;
   isolation: isolate;
 }
@@ -1206,7 +1206,7 @@ canvas.gf-sheet-art[data-ready] { opacity: 1; filter: none; }
 .hs-hot { display: grid; grid-template-columns: 1fr 1fr; gap: 2px 8px; padding: 0 8px; }
 .hs-hot-i { display: flex; align-items: center; gap: 12px; height: 40px; padding: 0 8px; border-radius: 12px; color: var(--ink); font-size: 14px; min-width: 0; transition: background-color .15s var(--ease-out); }
 .hs-hot-i[aria-selected="true"], .hs-row-i[aria-selected="true"] { background: var(--chip, color-mix(in srgb, var(--ink) 6%, transparent)); }
-.hs-no { flex: none; width: 24px; font: 400 16px/1 "Margin Pixel", var(--mono); color: var(--faint); -webkit-font-smoothing: none; font-smooth: never; }
+.hs-no { flex: none; width: 24px; font: 400 16px/1 "Margin Pixel", var(--mono); color: var(--faint); -webkit-font-smoothing: auto;  }
 .hs-no.lead { color: var(--accent-text); }
 .hs-t { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .hs-t mark { background: none; color: var(--accent-text); }
@@ -1541,4 +1541,7 @@ canvas.gf-sheet-art[data-ready] { opacity: 1; filter: none; }
 .settings-search{width:100%;padding:12px;border:1px solid var(--line);border-radius:12px;background:var(--chip);color:var(--ink);font:inherit;margin-bottom:16px}
 .group[hidden],.row[hidden],.block[hidden]{display:none!important}
 
-.fp-months{font-size:14px;line-height:16px}
+.app .fp-months{font-size:14px;line-height:16px}
+
+.app .card .body{text-shadow:none}
+.idcl{--idcl-font-mono:var(--sans)}
