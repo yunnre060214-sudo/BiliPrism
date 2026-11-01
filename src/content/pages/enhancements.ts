@@ -158,10 +158,13 @@ export async function startPlayerEnhancements(): Promise<void> {
   });
   observer.observe(document.documentElement, { childList: true, subtree: true });
   document.addEventListener('fullscreenchange', () => { syncWheel(); schedule(); });
-  addEventListener('popstate', schedule); addEventListener('pagehide', () => {
+  addEventListener('popstate', schedule);
+  addEventListener('pageshow', event => { if (event.persisted) { void loadSettings().then(next => { settings = next; applySpeed(); sync(); }); } });
+  addEventListener('pagehide', event => {
+    if (event.persisted) return;
     observer?.disconnect(); unbind(); clearTimeout(pending); clearTimeout(speedTimer); clearTimeout(statusTimer);
     window.removeEventListener('wheel', wheel, true);
-  }, { once: true });
+  });
   onSettingsChange((next: Settings) => { settings = next; applySpeed(); sync(); });
   sync();
 }

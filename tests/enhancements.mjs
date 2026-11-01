@@ -63,6 +63,13 @@ try {
     assert.equal(await sw.evaluate(async () => (await chrome.storage.local.get('biliprism:settings'))['biliprism:settings']?.player.speed), 1.5);
     await open('?p=2');
     await page.waitForFunction(() => document.querySelector('video').playbackRate === 1.5);
+    await page.evaluate(() => {
+      dispatchEvent(new PageTransitionEvent('pagehide', { persisted: true }));
+      const next = document.createElement('video'); next.volume = .5;
+      document.querySelector('video').replaceWith(next);
+      dispatchEvent(new PageTransitionEvent('pageshow', { persisted: true }));
+    });
+    await page.waitForFunction(() => document.querySelector('video').playbackRate === 1.5);
   });
   await check('宽屏实时开关与持久化', async () => {
     await tools().getByRole('button', { name: '宽屏', exact: true }).click();
