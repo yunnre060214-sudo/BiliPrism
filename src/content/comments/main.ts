@@ -6,10 +6,14 @@ import { orderReplies, type ReplyMeta, type TreeEntry } from './tree';
 import { getCommentReplyBranchPath, getCommentReplyBranchToggleY, type CommentReplyAvatarAnchor, type CommentReplyTreeBranch } from './geometry';
 
 type Renderer = PaginatedRenderer & { data?: unknown; reply?: unknown; replyItem?: unknown };
+type ToolPosition = 'top' | 'middle' | 'bottom';
+interface Tools {
+  el: HTMLDivElement; more: HTMLButtonElement; status: HTMLSpanElement; position: ToolPosition;
+}
 interface State {
   component: Renderer; container: HTMLElement; nodes: TreeEntry<Renderer>[];
   cache: Map<string, ReplyMeta>; collapsed: Set<string>; rootId: string;
-  message: string; tools: HTMLDivElement; pages: ReplyPages; more: HTMLButtonElement; status: HTMLSpanElement;
+  message: string; tools: Tools[]; pages: ReplyPages;
   layer: SVGSVGElement; resize: ResizeObserver; layout: string; job: number;
 }
 const selector = 'bili-comment-reply-renderer, bili-comment-renderer';
@@ -18,8 +22,9 @@ const NS = 'http://www.w3.org/2000/svg';
 const sheet = new CSSStyleSheet();
 sheet.replaceSync(`
 :host{position:relative}
-#expander-contents{display:flex;flex-direction:column;align-items:stretch}
+#expander-contents{display:flex;flex-direction:column;align-items:stretch;padding-block-start:var(--bp-tree-top-height,0px)}
 #expander-contents>:is(bili-comment-reply-renderer,bili-comment-renderer)[data-bp-reply-depth]{box-sizing:border-box;display:block;width:100%;padding-inline-start:var(--bp-tree-indent,0px);order:var(--bp-tree-order,0)}
+#expander-contents>[data-bp-tree-middle]{padding-block-start:var(--bp-tree-middle-height,0px)}
 #expander-contents>#expander-footer{order:2147483647}
 #expander-contents>[data-bp-reply-hidden]{display:none!important}
 .bp-tree-guides{position:absolute;inset:0;width:100%;height:100%;overflow:visible;pointer-events:none}
@@ -30,7 +35,8 @@ sheet.replaceSync(`
 .bp-tree-branch:hover .bp-tree-line,.bp-tree-branch:focus .bp-tree-line{stroke:#00aeec}
 .bp-tree-branch:focus{outline:none}
 .bp-tree-branch:focus .bp-tree-toggle{stroke:#00aeec;stroke-width:2}
-.bp-tree-tools{display:flex;flex-wrap:wrap;gap:12px;align-items:center;padding:12px 0;color:var(--text2,#61666d);font:500 14px/1.5 "Segoe UI","Microsoft YaHei",system-ui,sans-serif}
+.bp-tree-tools{scroll-margin-block-start:96px;scroll-margin-block-end:16px;box-sizing:border-box;display:flex;flex-wrap:wrap;gap:12px;align-items:center;padding:12px 0;color:var(--text2,#61666d);background:var(--m-canvas,var(--bg1,#fff));font:500 14px/1.5 "Segoe UI","Microsoft YaHei",system-ui,sans-serif}
+.bp-tree-tools[data-position="top"],.bp-tree-tools[data-position="middle"]{position:absolute;inset-inline-start:0;top:0;width:100%;z-index:1}
 .bp-tree-tools[hidden]{display:none}
 .bp-tree-tools button{font:inherit;color:var(--text_link,#0089c0);background:var(--bg1,#fff);border:1px solid var(--line_regular,#b0b4bb);border-radius:8px;padding:6px 10px;cursor:pointer}
 .bp-tree-tools button:disabled{cursor:wait;opacity:.7}
@@ -104,6 +110,7 @@ function layout(state: State): void {
     if (n.item.style.getPropertyValue('--bp-tree-indent') !== indent) n.item.style.setProperty('--bp-tree-indent',indent);
     if (n.item.style.getPropertyValue('--bp-tree-order') !== order) n.item.style.setProperty('--bp-tree-order',order);
   }
+  placeTools(state);
   const origin = component.getBoundingClientRect();
   const rootRenderer = nativeRoot(component), rootAnchor = avatar(rootRenderer, origin);
   state.layer.style.display = pref.showGuides ? '' : 'none';
@@ -140,10 +147,12 @@ function layout(state: State): void {
 }
 function schedule(state: State): void { if (!state.job) state.job=requestAnimationFrame(()=>layout(state)); }
 function reset(state: State): void {
-  cancelAnimationFrame(state.job); state.resize.disconnect(); state.layer.remove(); state.tools.remove(); state.pages.stopped=true;
+  cancelAnimationFrame(state.job); state.resize.disconnect(); state.layer.remove(); state.tools.forEach(t=>t.el.remove()); state.pages.stopped=true;
+  state.component.style.removeProperty('--bp-tree-top-height'); state.component.style.removeProperty('--bp-tree-middle-height');
   const sr=state.component.shadowRoot; if (sr) sr.adoptedStyleSheets=sr.adoptedStyleSheets.filter(s=>s!==sheet);
   for (const n of state.nodes) {
     delete n.item.dataset.bpReplyDepth; n.item.removeAttribute('data-bp-reply-hidden');
+    n.item.removeAttribute('data-bp-tree-middle');
     n.item.style.removeProperty('--bp-tree-indent'); n.item.style.removeProperty('--bp-tree-order');
   }
 }
@@ -155,25 +164,12 @@ function update(component: Renderer): void {
   if (!state) {
     const layer=svg('svg',{class:'bp-tree-guides','aria-label':'评论回复层级'});
     const resize=new ResizeObserver(()=>{ const s=states.get(component); if(s) schedule(s); });
-    const tools=document.createElement('div'); tools.className='bp-tree-tools';
-    const more=document.createElement('button');more.type='button';more.textContent='全部展开楼层';
-    const collapse=document.createElement('button');collapse.type='button';collapse.textContent='收起楼层';
-    const status=document.createElement('span');status.setAttribute('role','status');status.setAttribute('aria-live','polite');
-    tools.append(more,collapse,status);
-    state={component,container,nodes:[],cache:new Map(),collapsed:new Set(),rootId:'',layer,resize,layout:'',job:0,message:'',tools,more,status,pages:{pages:new Map(),busy:false,stopped:false}};
-    const current=state;
-    more.onclick=()=>{
-      current.message='';current.collapsed.clear();layout(current);
-      const pages=current.pages;
-      void expandReplyPages(component,pages,preferences().batchPages,()=>active()&&states.get(component)===current&&current.pages===pages,
-        ()=>current.nodes.map(n=>dataOf(n.item)).filter((x):x is Record<string,unknown>=>!!x),()=>updateTools(current))
-        .then(()=>{if(active()&&states.get(component)===current)update(component);})
-        .catch(e=>{current.message=(e as Error).message;updateTools(current);});
-    };
-    collapse.onclick=()=>{current.collapsed.add('thread-root');layout(current);};
-    root.append(tools);
+    state={component,container,nodes:[],cache:new Map(),collapsed:new Set(),rootId:'',layer,resize,layout:'',job:0,message:'',tools:[],pages:{pages:new Map(),busy:false,stopped:false}};
+    state.tools=(['top','middle','bottom'] as const).map(position=>createTools(state!,position));
+    root.append(...state.tools.map(t=>t.el));
     states.set(component,state); root.adoptedStyleSheets=[...root.adoptedStyleSheets,sheet]; root.append(layer);
     resize.observe(container);
+    resize.observe(state.tools[0].el);
   }
   const entries=[...container.children].filter((n): n is Renderer=>n instanceof HTMLElement&&n.matches(selector))
     .map(item=>({item,meta:metaOf(item)})).filter((x): x is { item: Renderer; meta: ReplyMeta }=>!!x.meta);
@@ -186,6 +182,7 @@ function update(component: Renderer): void {
   // 原生分页撤掉的节点不保留额外属性，复用同一元素时也能重新计算关系。
   for (const old of state.nodes) if(!entries.some(e=>e.item===old.item)) {
     old.item.removeAttribute('data-bp-reply-hidden');delete old.item.dataset.bpReplyDepth;
+    old.item.removeAttribute('data-bp-tree-middle');
     old.item.style.removeProperty('--bp-tree-indent');old.item.style.removeProperty('--bp-tree-order');
   }
   state.nodes=orderReplies(entries,state.cache);
@@ -193,13 +190,69 @@ function update(component: Renderer): void {
   updateTools(state);
   schedule(state);
 }
+function createTools(s: State, position: ToolPosition): Tools {
+  const el=document.createElement('div');el.className='bp-tree-tools';el.dataset.position=position;
+  el.setAttribute('role','group');el.setAttribute('aria-label',`楼层${position==='top'?'上方':position==='middle'?'中部':'下方'}操作`);
+  const more=document.createElement('button');more.type='button';more.textContent='全部展开楼层';
+  const collapse=document.createElement('button');collapse.type='button';collapse.textContent='收起楼层';
+  const status=document.createElement('span');
+  // Announce each change once, while all three visible projections stay in sync.
+  if(position==='bottom'){status.setAttribute('role','status');status.setAttribute('aria-live','polite');}
+  else status.setAttribute('aria-hidden','true');
+  el.append(more,collapse,status);
+  more.onclick=()=>{
+    const wasCollapsed=s.collapsed.has('thread-root');
+    s.message='';s.collapsed.clear();layout(s);
+    if(wasCollapsed&&position!=='top'){
+      s.tools[0].el.scrollIntoView({block:'nearest',behavior:'auto'});
+      s.tools[0].more.focus({preventScroll:true});
+    }
+    const pages=s.pages;
+    void expandReplyPages(s.component,pages,preferences().batchPages,()=>active()&&states.get(s.component)===s&&s.pages===pages,
+      ()=>s.nodes.map(n=>dataOf(n.item)).filter((x):x is Record<string,unknown>=>!!x),()=>updateTools(s))
+      .then(()=>{if(active()&&states.get(s.component)===s)update(s.component);})
+      .catch(e=>{s.message=(e as Error).message;updateTools(s);});
+  };
+  collapse.onclick=()=>{
+    s.collapsed.add('thread-root');layout(s);
+    if(position!=='top'){
+      s.tools[0].el.scrollIntoView({block:'nearest',behavior:'auto'});
+      s.tools[0].more.focus({preventScroll:true});
+    }
+  };
+  return {el,more,status,position};
+}
+/** Reserve space with CSS on existing hosts, and project controls as independent
+ * shadow-root siblings. Never splice a control into Lit's native child list. */
+function placeTools(s: State): void {
+  updateTools(s);
+  const [top,middle]=s.tools;
+  const visible=s.nodes.filter(n=>!n.item.hasAttribute('data-bp-reply-hidden'));
+  const target=!middle.el.hidden?visible[Math.floor(visible.length/2)]?.item:undefined;
+  for(const n of s.nodes)n.item.toggleAttribute('data-bp-tree-middle',n.item===target);
+  const host=s.component.getBoundingClientRect(), container=s.container.getBoundingClientRect();
+  for(const t of [top,middle]){
+    t.el.style.insetInlineStart=`${container.left-host.left}px`;
+    t.el.style.width=`${container.width}px`;
+  }
+  const height=top.el.hidden?0:Math.ceil(top.el.getBoundingClientRect().height);
+  const set=(key:string,value:string)=>{if(s.component.style.getPropertyValue(key)!==value)s.component.style.setProperty(key,value);};
+  set('--bp-tree-top-height',`${height}px`);
+  set('--bp-tree-middle-height',target?`${height}px`:'0px');
+  top.el.style.top=`${container.top-host.top}px`;
+  if(target)middle.el.style.top=`${target.getBoundingClientRect().top-host.top}px`;
+}
 function updateTools(s: State): void {
   const pages=s.pages, total=totalPages(s.component), loaded=pages.pages.size;
-  s.tools.hidden=s.nodes.length===0&&!s.component.showViewMore;
-  s.more.disabled=pages.busy;
-  s.more.textContent=pages.busy?'正在展开…':loaded>0&&loaded<total?'继续展开剩余楼层':'全部展开楼层';
-  s.status.textContent=s.message|| (pages.busy?`已加载 ${loaded} / ${total} 页`:loaded>0?`已加载 ${loaded} / ${total} 页`:'展开本页分支及更多回复');
-  s.tools.setAttribute('aria-busy',String(pages.busy));
+  const empty=s.nodes.length===0&&!s.component.showViewMore;
+  const visible=s.nodes.filter(n=>!n.item.hasAttribute('data-bp-reply-hidden')).length;
+  for(const t of s.tools){
+    t.el.hidden=empty||(t.position==='middle'&&visible<6);
+    t.more.disabled=pages.busy;
+    t.more.textContent=pages.busy?'正在展开…':loaded>0&&loaded<total?'继续展开剩余楼层':'全部展开楼层';
+    t.status.textContent=s.message|| (pages.busy?`已加载 ${loaded} / ${total} 页`:loaded>0?`已加载 ${loaded} / ${total} 页`:'展开本页分支及更多回复');
+    t.el.setAttribute('aria-busy',String(pages.busy));
+  }
 }
 
 // Local theme declarations inside native shadow roots otherwise override html

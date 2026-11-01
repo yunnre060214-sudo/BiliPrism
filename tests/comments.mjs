@@ -31,6 +31,9 @@ try{
     window.nativeReplyContainer=rr.querySelector('#expander-contents');window.originalNodes=[...window.nativeReplyContainer.childNodes];
   });
   const replies=page.locator('bili-comment-replies-renderer');
+  const topTools=replies.getByRole('group',{name:'楼层上方操作',exact:true});
+  const middleTools=replies.getByRole('group',{name:'楼层中部操作',exact:true});
+  const bottomTools=replies.getByRole('group',{name:'楼层下方操作',exact:true});
   await page.waitForFunction(()=>{const r=document.querySelector('bili-comments')?.shadowRoot.querySelector('bili-comment-thread-renderer')?.shadowRoot.querySelector('bili-comment-replies-renderer');return r?.shadowRoot.querySelector('#native-reply-14')?.dataset.bpReplyDepth==='2';});
   const state=await page.evaluate(()=>{
     const c=window.nativeReplyContainer;return {unchanged:window.originalNodes.every((n,i)=>c.childNodes[i]===n),entries:window.nativeReplies.map(n=>({id:n.id,depth:Number(n.dataset.bpReplyDepth),order:Number(n.style.getPropertyValue('--bp-tree-order')),top:n.getBoundingClientRect().top})),lines:c.getRootNode().querySelectorAll('.bp-tree-line').length};
@@ -38,6 +41,7 @@ try{
   assert.equal(state.unchanged,true);assert.deepEqual(state.entries.map(n=>n.depth),[1,2,0,0]);assert.deepEqual(state.entries.map(n=>n.order),[1,2,0,3]);assert.ok(state.lines>=2);
   assert.ok(state.entries[2].top<state.entries[0].top&&state.entries[0].top<state.entries[1].top&&state.entries[1].top<state.entries[3].top);
   results.push({name:'真实 MAIN 世界数据读取、树序、缩进、连线及 Lit 节点保留',state});console.log('PASS 树状层级与连线；原生回复及 Lit 标记节点保持原位');
+  assert.equal(await topTools.isVisible(),true);assert.equal(await bottomTools.isVisible(),true);assert.equal(await middleTools.count(),0);
   await replies.getByRole('button',{name:'收起B的回复',exact:true}).press('Enter');
   assert.equal(await page.locator('#native-reply-14').isVisible(),false);
   assert.equal(await page.locator('#native-reply-12').isVisible(),true);
@@ -47,9 +51,9 @@ try{
   await page.locator('#native-reply-11').getByRole('button',{name:'回复',exact:true}).click();
   assert.equal(await page.locator('#native-reply-11').getAttribute('data-native-clicked'),'true');
   results.push({name:'分支键盘折叠与原生回复操作',ok:true});console.log('PASS 分支折叠只影响子回复，原生回复按钮仍可用');
-  await replies.getByRole('button',{name:'收起楼层',exact:true}).click();
+  await bottomTools.getByRole('button',{name:'收起楼层',exact:true}).click();
   assert.equal(await page.locator('#native-reply-11').isVisible(),false);
-  await replies.getByRole('button',{name:'全部展开楼层',exact:true}).click();
+  await topTools.getByRole('button',{name:'全部展开楼层',exact:true}).click();
   await page.waitForTimeout(100);
   assert.equal(await page.locator('#native-reply-14').isVisible(),true);
   console.log('PASS 全部展开及一键收起已加载楼层');
@@ -65,6 +69,9 @@ try{
   await sw.evaluate(async()=>{const key='biliprism:settings';const s=(await chrome.storage.local.get(key))[key]||{};await chrome.storage.local.set({[key]:{...s,commentTree:false}});});
   await page.waitForFunction(()=>!window.nativeReplies[1].hasAttribute('data-bp-reply-depth'));
   assert.equal(await replies.locator('.bp-tree-guides').count(),0);
+  assert.equal(await replies.locator('.bp-tree-tools').count(),0);
+  assert.equal(await page.locator('[data-bp-tree-middle]').count(),0);
+  assert.equal(await replies.evaluate(el=>el.style.getPropertyValue('--bp-tree-top-height')),'');
   await sw.evaluate(async()=>{const key='biliprism:settings';const s=(await chrome.storage.local.get(key))[key]||{};await chrome.storage.local.set({[key]:{...s,commentTree:true}});});
   await page.waitForFunction(()=>window.nativeReplies[1].dataset.bpReplyDepth==='0'); // 关闭后缓存清空，当前缺失父节点不再猜测。
   // Native reactive .list and pagination methods, including an in-flight request
@@ -84,19 +91,61 @@ try{
   });
   await sw.evaluate(async()=>{const key='biliprism:settings',s=(await chrome.storage.local.get(key))[key]||{};await chrome.storage.local.set({[key]:{...s,comments:{...s.comments,batchPages:1}}});});
   await page.waitForTimeout(1000);
-  await replies.getByRole('button',{name:/全部展开楼层|继续展开剩余楼层/}).click();
+  await topTools.getByRole('button',{name:/全部展开楼层|继续展开剩余楼层/}).click();
   await page.waitForFunction(()=>window.paginationRenderer.list.length===4);
   assert.equal(await page.evaluate(()=>window.paginationRenderer.list.find(d=>d.rpid_str==='14').like),9);
   await page.waitForFunction(()=>document.querySelector('bili-comments').shadowRoot.querySelector('bili-comment-thread-renderer').shadowRoot.querySelector('bili-comment-replies-renderer').shadowRoot.querySelector('#native-reply-14').dataset.bpReplyDepth==='2');
-  await replies.getByRole('button',{name:'继续展开剩余楼层',exact:true}).click();
+  await bottomTools.getByRole('button',{name:'继续展开剩余楼层',exact:true}).click();
   await replies.getByRole('status').filter({hasText:'模拟原生分页失败'}).waitFor();
   assert.equal(await page.evaluate(()=>window.paginationRenderer.list.length),4);
-  await replies.getByRole('button',{name:'继续展开剩余楼层',exact:true}).click();
+  await bottomTools.getByRole('button',{name:'继续展开剩余楼层',exact:true}).click();
   await page.waitForFunction(()=>window.paginationRenderer.list.length===5);
   await page.waitForFunction(()=>document.querySelector('bili-comments').shadowRoot.querySelector('bili-comment-thread-renderer').shadowRoot.querySelector('bili-comment-replies-renderer').shadowRoot.querySelector('#native-reply-16').dataset.bpReplyDepth==='1');
   assert.deepEqual(await page.evaluate(()=>window.paginationRenderer.calls),[2,3,3]);
   assert.equal(await page.evaluate(()=>window.paginationRenderer.maxConcurrent),1);
   console.log('PASS 原生批量分页、跨页合树、去重、点赞保留、失败重试');
+  // Long thread: project top/middle/bottom controls around the native hosts,
+  // keeping the native child-node sequence exactly intact.
+  await page.evaluate(()=>{
+    const r=window.paginationRenderer;
+    const make=i=>({rpid_str:String(100+i),root_str:'10',parent_str:'10',ctime:i,member:{uname:'回复 '+(i+1)},content:{message:'长楼层内容 '+(i+1)},action:0,like:i});
+    r.currentPage=1;r.totalPage=2;r.list=Array.from({length:12},(_,i)=>make(i));
+    window.longThreadNodes=[...window.nativeReplyContainer.childNodes];
+    r.handleChangePage=async({idx})=>{r.calls.push(idx+1);r.showSpinner=true;try{await new Promise(resolve=>setTimeout(resolve,400));r.currentPage=idx+1;r.list=[make(12)];}finally{r.showSpinner=false;}};
+  });
+  await middleTools.waitFor();
+  await page.waitForFunction(()=>!!window.nativeReplyContainer.querySelector('[data-bp-tree-middle]'));
+  const placement=await page.evaluate(()=>{
+    const c=window.nativeReplyContainer,sr=c.getRootNode(),box=sel=>sr.querySelector(sel).getBoundingClientRect().toJSON();
+    const children=[...c.children].filter(n=>n.data),mid=c.querySelector('[data-bp-tree-middle]');
+    return {unchanged:window.longThreadNodes.every((n,i)=>c.childNodes[i]===n),top:box('[data-position="top"]'),middle:box('[data-position="middle"]'),bottom:box('[data-position="bottom"]'),first:children[0].shadowRoot.querySelector('#card').getBoundingClientRect().toJSON(),midBody:mid.shadowRoot.querySelector('#card').getBoundingClientRect().toJSON(),last:children.at(-1).getBoundingClientRect().toJSON()};
+  });
+  assert.equal(placement.unchanged,true);assert.ok(placement.top.bottom<=placement.first.top+1);
+  assert.ok(placement.middle.top>placement.first.bottom);assert.ok(placement.middle.bottom<=placement.midBody.top+1);
+  assert.ok(placement.bottom.top>=placement.last.bottom-1);
+  // Any entry starts the same operation. All entry buttons and labels update together.
+  await middleTools.getByRole('button',{name:'继续展开剩余楼层',exact:true}).click();
+  await page.waitForFunction(()=>window.paginationRenderer.showSpinner===true);
+  assert.equal(await replies.getByRole('button',{name:'正在展开…',exact:true}).count(),3);
+  assert.equal(await replies.getByRole('button',{name:'正在展开…',exact:true}).evaluateAll(nodes=>nodes.every(n=>n.disabled)),true);
+  await page.waitForFunction(()=>window.paginationRenderer.list.length===13);
+  await page.waitForFunction(()=>[...window.nativeReplyContainer.getRootNode().querySelectorAll('.bp-tree-tools span')].every(n=>n.textContent==='已加载 2 / 2 页'));
+  await middleTools.getByRole('button',{name:'收起楼层',exact:true}).click();
+  assert.equal(await middleTools.count(),0);assert.equal(await page.locator('[data-bp-reply-hidden]').count(),13);
+  assert.equal(await topTools.getByRole('button',{name:'全部展开楼层',exact:true}).evaluate(el=>el.getRootNode().activeElement===el),true);
+  await topTools.getByRole('button',{name:'全部展开楼层',exact:true}).click();
+  await middleTools.waitFor();assert.equal(await page.locator('[data-bp-reply-hidden]').count(),0);
+  await page.locator('#commentapp').evaluate(el=>el.scrollIntoView({block:'start'}));
+  for(const theme of ['light','dark']){
+    await page.emulateMedia({colorScheme:theme});await page.waitForTimeout(100);
+    await page.screenshot({path:`tests/artifacts/comments-controls-${theme}.png`,fullPage:true});
+  }
+  await page.setViewportSize({width:420,height:900});
+  await page.waitForTimeout(150);
+  const narrow=await replies.locator('.bp-tree-tools').evaluateAll(nodes=>nodes.filter(n=>!n.hidden).map(n=>({width:n.clientWidth,overflow:n.scrollWidth-n.clientWidth})));
+  assert.ok(narrow.every(n=>n.overflow<=1),JSON.stringify(narrow));
+  console.log('PASS 楼层上中下入口位置、原生节点保留、统一加载进度、折叠定位与窄屏换行');
+  results.push({name:'上中下入口投影、状态同步、折叠定位与窄屏换行',ok:true,placement,narrow});
   assert.deepEqual(errors,[]);
   results.push({name:'设置关闭恢复原生布局，重新开启不猜测未知父关系',ok:true});console.log('PASS 树状设置开关与分页回退');
   writeFileSync('tests/artifacts/comments-results.json',JSON.stringify(results,null,2));
