@@ -1,0 +1,158 @@
+/* 映棱 BiliPrism · 详情页（单条动态 / 图文 opus / 专栏 / 番剧）
+   骨架：21st「Article With Author Sidebar」— max-w-5xl 两栏：正文 + 17rem 粘性侧栏（侧栏是 #margin-aside，Shadow DOM）。
+   html.margin-detail[data-margin-detail="opus|dyn|read|bangumi"]，入口脚本在 document_start 同步加上，避免先闪原版版式。 */
+
+#margin-aside { position: fixed; top: 96px; z-index: 30; }
+
+/* ── 图文 / 专栏 / 单条动态：去掉 B 站插画底图，正文列往左让出侧栏 ── */
+html.margin-detail .bgc, html.margin-detail .bg, html.margin-detail #app > .bg-img { display: none !important; }
+html.margin-detail:not([data-margin-detail="bangumi"]) #app { background: transparent !important; padding-bottom: 96px; }
+/* 正文 708 + gap 48 + 侧栏 272 = 1028，整组居中 */
+html[data-margin-detail="opus"] .opus-detail, html[data-margin-detail="read"] .opus-detail {
+  margin: 24px 0 0 max(24px, calc(50% - 514px)) !important; width: 708px !important;
+  border-radius: 24px; background: color-mix(in srgb, var(--m-surface) 94%, transparent) !important;
+  box-shadow: var(--ring), var(--sh-sm);
+}
+html[data-margin-detail="dyn"] #app .content { margin: 24px 0 0 max(24px, calc(50% - 476px)) !important; }
+html.margin-detail-narrow[data-margin-detail="opus"] .opus-detail, html.margin-detail-narrow[data-margin-detail="read"] .opus-detail,
+html.margin-detail-narrow[data-margin-detail="dyn"] #app .content { margin-left: auto !important; margin-right: auto !important; }
+/* 原生左侧浮动目录由侧栏目录代替（窄屏没有侧栏时保留） */
+html.margin-detail:not(.margin-detail-narrow) .opus-toc { display: none !important; }
+/* 原生右侧竖条工具栏由映棱侧栏代替（侧栏按钮转发点击给它），只藏起来不删 */
+html.margin-detail:not(.margin-detail-narrow) .right-sidebar-wrap,
+html.margin-detail:not(.margin-detail-narrow) .side-toolbar { opacity: 0 !important; pointer-events: none !important; }
+html.margin-detail .opus-detail .bili-opus-view, html.margin-detail .opus-detail .opus-module-content,
+html.margin-detail .opus-detail .bili-tabs, html.margin-detail .opus-detail .opus-tabs,
+html.margin-detail .opus-detail .bili-tabs__header, html.margin-detail .opus-detail .bili-tabs__content { background: transparent !important; }
+
+/* 封面：整幅出血，底部渐隐到卡片 */
+html.margin-detail .opus-module-top { margin: 0 !important; }
+html.margin-detail .opus-module-top, html.margin-detail .opus-module-top__album__cover, html.margin-detail .opus-module-top__album__cover .b-img,
+html.margin-detail .opus-module-top__album__cover img { border-radius: 24px 24px 0 0 !important; overflow: hidden; }
+html.margin-detail .opus-module-top__album__cover img { object-fit: cover; }
+
+/* 标题：衬线 28/36 */
+html.margin-detail .opus-module-title { padding: 40px 56px 0 !important; margin: 0 !important; }
+html.margin-detail .opus-module-title__inner { padding: 0 !important; }
+html.margin-detail .opus-module-title__text, html.margin-detail .opus-module-title__content {
+  font: 400 28px/36px var(--m-serif) !important; letter-spacing: .01em; color: var(--m-ink) !important; text-wrap: balance;
+}
+/* 署名行：小头像 + 名字 + mono 时间（详细作者卡在侧栏） */
+html.margin-detail .opus-module-author { padding: 16px 56px 0 !important; margin: 0 !important; height: auto !important; align-items: center; }
+/* 头像和装扮卡在侧栏作者卡里，这里只留名字 + 时间 + 更多菜单 */
+html.margin-detail .opus-module-author__left, html.margin-detail .opus-module-author__decorate { display: none !important; }
+html.margin-detail .opus-module-author__center { padding-left: 0 !important; display: flex; align-items: baseline; gap: 12px; }
+html.margin-detail .opus-module-author__name-row { padding: 0 !important; }
+html.margin-detail .opus-module-author__name { font-size: 14px !important; font-weight: 500 !important; color: var(--m-ink) !important; }
+html.margin-detail .opus-module-author__pub, html.margin-detail .opus-module-author__pub__text {
+  margin: 0 !important; font: 12px/16px var(--m-mono) !important; letter-spacing: .02em; color: var(--m-muted) !important;
+}
+
+/* 文集条 */
+html.margin-detail .opus-module-collection { padding: 24px 56px 0 !important; margin: 0 !important; }
+html.margin-detail .opus-module-collection__box { border-radius: 12px !important; background: var(--m-chip) !important; box-shadow: var(--ring); color: var(--m-muted) !important; }
+html.margin-detail .opus-module-collection__title, html.margin-detail .opus-module-collection__count { color: var(--m-muted) !important; font-size: 13px !important; }
+
+/* 正文：16/28，4px 栅格，段距 20 */
+html.margin-detail .opus-module-content { padding: 32px 56px 0 !important; margin: 0 !important; }
+html.margin-detail .opus-module-content, html.margin-detail .opus-module-content p,
+html.margin-detail .opus-module-content span:not([style*="color:#"]):not([style*="color: #"]):not([style*="color:rgb"]) {
+  font-size: 16px !important; line-height: 28px !important; color: var(--m-ink) !important; letter-spacing: .01em;
+}
+html.margin-detail .opus-module-content p { margin: 0 0 20px !important; }
+html.margin-detail .opus-module-content h1, html.margin-detail .opus-module-content h2,
+html.margin-detail .opus-module-content h3, html.margin-detail .opus-module-content h4 {
+  margin: 40px 0 16px !important; font-family: var(--m-serif) !important; font-weight: 400 !important; color: var(--m-ink) !important; scroll-margin-top: 96px;
+}
+html.margin-detail .opus-module-content h1 { font-size: 24px !important; line-height: 32px !important; }
+html.margin-detail .opus-module-content h2 { font-size: 20px !important; line-height: 28px !important; }
+html.margin-detail .opus-module-content h3, html.margin-detail .opus-module-content h4 { font-size: 18px !important; line-height: 28px !important; }
+html.margin-detail .opus-module-content blockquote {
+  margin: 24px 0 !important; padding: 4px 0 4px 20px !important; border: 0 !important; border-left: 2px solid var(--m-ink) !important;
+  background: transparent !important; color: var(--m-muted) !important;
+}
+html.margin-detail .opus-module-content blockquote * { color: var(--m-muted) !important; }
+html.margin-detail .opus-module-content a { color: var(--m-accent) !important; text-decoration: underline; text-underline-offset: 3px; text-decoration-thickness: 1px; }
+html.margin-detail .opus-module-content .opus-para-pic, html.margin-detail .opus-module-content figure { margin: 28px 0 !important; }
+html.margin-detail .opus-module-content img, html.margin-detail .opus-module-content .b-img { border-radius: 12px !important; }
+html.margin-detail .opus-module-content pre, html.margin-detail .opus-module-content code {
+  font-family: var(--m-mono) !important; font-size: 13px !important; border-radius: 12px; background: var(--m-chip) !important; color: var(--m-ink) !important;
+}
+html.margin-detail .opus-module-content hr, html.margin-detail .opus-module-content .cut-off { border-color: var(--m-line) !important; }
+
+/* 话题标签 / 版权 / 分享行 */
+html.margin-detail .opus-module-extend { padding: 8px 56px 0 !important; margin: 0 !important; display: flex; flex-wrap: wrap; gap: 8px; }
+html.margin-detail .opus-module-extend__item { margin: 0 !important; height: 28px; padding: 0 12px !important; border-radius: 999px !important; background: var(--m-chip) !important; color: var(--m-muted) !important; box-shadow: var(--ring); }
+html.margin-detail .opus-module-extend__item:hover { color: var(--m-ink) !important; }
+html.margin-detail .opus-module-extend__item__text { font-size: 12px !important; color: inherit !important; }
+html.margin-detail .opus-module-copyright { padding: 16px 56px 0 !important; margin: 0 !important; }
+html.margin-detail .opus-module-copyright, html.margin-detail .opus-module-copyright * { font: 11px/16px var(--m-mono) !important; letter-spacing: .04em; color: var(--m-muted) !important; }
+html.margin-detail .opus-module-bottom { margin: 24px 56px 0 !important; padding: 20px 0 24px !important; border-top: 1px solid var(--m-line) !important; }
+html.margin-detail .opus-module-bottom__share, html.margin-detail .opus-module-bottom__feedback { font-size: 12px !important; color: var(--m-muted) !important; }
+
+/* 评论 / 赞与转发 标签：衬线 + 底部细线 */
+html.margin-detail .bili-tabs__header { padding: 0 56px !important; border-bottom: 1px solid var(--m-line) !important; margin: 0 !important; }
+html.margin-detail .bili-tabs__nav { padding: 0 !important; }
+html.margin-detail .bili-tabs__nav__item { font: 400 18px/48px var(--m-serif) !important; color: var(--m-muted) !important; margin-right: 32px !important; padding: 0 !important; }
+html.margin-detail .bili-tabs__nav__item.is-active, html.margin-detail .bili-tabs__nav__item--active, html.margin-detail .bili-tabs__nav__item[aria-selected="true"] { color: var(--m-ink) !important; }
+html.margin-detail .bili-tabs__nav__bar, html.margin-detail .bili-tabs__nav-bar, html.margin-detail .bili-tabs__active-bar { background: var(--m-ink) !important; height: 2px !important; border-radius: 2px; }
+html.margin-detail .bili-tabs__content, html.margin-detail .comment-wrap { padding-left: 32px !important; padding-right: 32px !important; }
+
+/* ── 单条动态：一张卡 ── */
+html[data-margin-detail="dyn"] #app .content .card {
+  border-radius: 24px !important; background: color-mix(in srgb, var(--m-surface) 94%, transparent) !important;
+  box-shadow: var(--ring), var(--sh-sm) !important; border: 0 !important;
+}
+html[data-margin-detail="dyn"] .bili-dyn-item { background: transparent !important; border: 0 !important; padding-top: 16px; }
+html[data-margin-detail="dyn"] .bili-dyn-item__main { padding-right: 32px !important; padding-bottom: 24px !important; }
+html[data-margin-detail="dyn"] .bili-dyn-title__text { font-size: 16px !important; font-weight: 500 !important; color: var(--m-ink) !important; }
+html[data-margin-detail="dyn"] .bili-dyn-time { font: 12px/16px var(--m-mono) !important; color: var(--m-muted) !important; }
+html[data-margin-detail="dyn"] .bili-dyn-item__ornament, html[data-margin-detail="dyn"] .bili-dyn-item__avatar .bili-avatar-pendent-dom { display: none !important; }
+html[data-margin-detail="dyn"] .bili-rich-text, html[data-margin-detail="dyn"] .bili-rich-text__content,
+html[data-margin-detail="dyn"] .dyn-card-opus__summary, html[data-margin-detail="dyn"] .bili-dyn-content__orig__desc {
+  font-size: 16px !important; line-height: 28px !important; color: var(--m-ink) !important;
+}
+html[data-margin-detail="dyn"] .dyn-card-opus__title, html[data-margin-detail="dyn"] .bili-dyn-card-opus__title {
+  font: 400 20px/28px var(--m-serif) !important; color: var(--m-ink) !important; margin-bottom: 8px;
+}
+html[data-margin-detail="dyn"] .bili-dyn-content__orig.reference { border-radius: 16px !important; background: var(--m-chip) !important; box-shadow: var(--ring); }
+html[data-margin-detail="dyn"] .bili-album__preview__picture, html[data-margin-detail="dyn"] .bili-album__preview__picture__img,
+html[data-margin-detail="dyn"] .bili-dyn-card-video, html[data-margin-detail="dyn"] .bili-dyn-card-video__cover,
+html[data-margin-detail="dyn"] .dyn-card-opus__pics img, html[data-margin-detail="dyn"] .bili-dyn-content img:not(.bili-avatar-img):not([class*="emoji"]) { border-radius: 12px !important; }
+html[data-margin-detail="dyn"] .bili-dyn-card-video { background: var(--m-chip) !important; box-shadow: var(--ring); overflow: hidden; }
+html[data-margin-detail="dyn"] .bili-dyn-card-video__title { color: var(--m-ink) !important; }
+html[data-margin-detail="dyn"] .bili-dyn-card-video__desc, html[data-margin-detail="dyn"] .bili-dyn-card-video__stat { color: var(--m-muted) !important; }
+html[data-margin-detail="dyn"] .bili-dyn-item__footer { display: none !important; } /* 底部操作行由侧栏代替 */
+html.margin-detail-narrow[data-margin-detail="dyn"] .bili-dyn-item__footer { display: flex !important; }
+
+/* ── 番剧播放页：和映棱播放页同一套语言 ── */
+html[data-margin-detail="bangumi"] #__next, html[data-margin-detail="bangumi"] .home-container,
+html[data-margin-detail="bangumi"] .main-container { background: transparent !important; }
+html[data-margin-detail="bangumi"] .main-container { padding-top: 24px !important; }
+html[data-margin-detail="bangumi"] #bilibili-player-wrap, html[data-margin-detail="bangumi"] .plp-player { border-radius: var(--m-radius) !important; overflow: hidden; box-shadow: var(--ring), var(--sh-md); }
+html[data-margin-detail="bangumi"] [class*="mediainfo_mediaTitle"], html[data-margin-detail="bangumi"] [class*="mediainfo_title"] a,
+html[data-margin-detail="bangumi"] [class*="mediainfo_mediaTitle"] a { font: 400 24px/32px var(--m-serif) !important; color: var(--m-ink) !important; }
+html[data-margin-detail="bangumi"] [class*="mediainfo_mediaDesc"], html[data-margin-detail="bangumi"] [class*="mediainfo_mediaInfo"] { color: var(--m-muted) !important; }
+html[data-margin-detail="bangumi"] [class*="mediainfo_mediaInfo"] span, html[data-margin-detail="bangumi"] [class*="mediainfo_mediaInfo"] em { font-variant-numeric: tabular-nums; }
+html[data-margin-detail="bangumi"] [class*="mediainfo_mediaCover"] img, html[data-margin-detail="bangumi"] [class*="mediainfo_cover"] img { border-radius: 12px !important; box-shadow: var(--ring), var(--sh-sm); }
+html[data-margin-detail="bangumi"] [class*="toolbar_toolbar"] { border-bottom: 1px solid var(--m-line) !important; }
+/* 右栏：选集、花絮各成一张卡（Next.js CSS Modules 类名带哈希，用前缀匹配） */
+html[data-margin-detail="bangumi"] [class*="SectionPanel_panel"] {
+  border-radius: 20px !important; padding: 16px !important; background: color-mix(in srgb, var(--m-surface) 88%, transparent) !important; box-shadow: var(--ring), var(--sh-xs);
+}
+html[data-margin-detail="bangumi"] [class*="SectionHeader_titleWrap"], html[data-margin-detail="bangumi"] [class*="SectionHeader_titleWrap"] * { font-family: var(--m-serif) !important; font-size: 18px !important; font-weight: 400 !important; color: var(--m-ink) !important; }
+html[data-margin-detail="bangumi"] [class*="PageTabs_tab"], html[data-margin-detail="bangumi"] [class*="SectionTabs_tab"] { font-family: var(--m-mono) !important; font-size: 12px !important; color: var(--m-muted) !important; border-radius: 999px !important; }
+html[data-margin-detail="bangumi"] [class*="PageTabs_tab"][class*="ctive"], html[data-margin-detail="bangumi"] [class*="SectionTabs_tab"][class*="ctive"] { color: var(--m-ink) !important; background: var(--m-chip) !important; }
+html[data-margin-detail="bangumi"] [class*="EpisodeVirtualList_numberItem"] { border-radius: 10px !important; background: var(--m-chip) !important; border: 0 !important; box-shadow: none !important; }
+html[data-margin-detail="bangumi"] [class*="EpisodeVirtualList_numberTitle"] { font-family: var(--m-mono) !important; color: var(--m-ink) !important; }
+html[data-margin-detail="bangumi"] [class*="EpisodeVirtualList_numberItem"][class*="ctive"], html[data-margin-detail="bangumi"] [class*="EpisodeVirtualList_numberItem"][class*="elect"] { background: var(--m-ink) !important; }
+html[data-margin-detail="bangumi"] [class*="EpisodeVirtualList_numberItem"][class*="ctive"] [class*="numberTitle"], html[data-margin-detail="bangumi"] [class*="EpisodeVirtualList_numberItem"][class*="elect"] [class*="numberTitle"] { color: var(--m-canvas) !important; }
+html[data-margin-detail="bangumi"] [class*="EpisodeVirtualList_listItem"] { border-radius: 10px !important; }
+html[data-margin-detail="bangumi"] [class*="EpisodeVirtualList_cover"], html[data-margin-detail="bangumi"] [class*="EpisodeVirtualList_cover"] img { border-radius: 8px !important; }
+html[data-margin-detail="bangumi"] [class*="upinfo_upInfoCard"] { border-radius: 16px !important; background: var(--m-chip) !important; box-shadow: var(--ring); }
+html[data-margin-detail="bangumi"] [class*="upinfo_upName"] { color: var(--m-ink) !important; }
+html[data-margin-detail="bangumi"] [class*="follow_btnFollow"], html[data-margin-detail="bangumi"] [class*="upinfo_btn_follow"] { border-radius: 999px !important; }
+html[data-margin-detail="bangumi"] [class*="mediainfo_mediaInfoWrap"] { padding-top: 8px; }
+html[data-margin-detail="bangumi"] [class*="mediainfo_statItem"] { font-family: var(--m-mono) !important; color: var(--m-muted) !important; }
+html[data-margin-detail="bangumi"] [class*="mediainfo_mediaDescLabel"] { color: var(--m-muted) !important; }
+html[data-margin-detail="bangumi"] [class*="mediainfo_content"] { color: var(--m-ink) !important; line-height: 24px !important; }

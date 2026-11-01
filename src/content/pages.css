@@ -1,0 +1,139 @@
+html.margin-skin {
+  /* movements.dev「Smooth Shadows」：size+intensity 合成的 6 层软阴影 + 0.5px 发丝环；「Perfect Corner Radius」：内圆角 = 外圆角 − 间距 */
+  --shadow-rgb: 24 22 20; --hair: 1px; --ring: 0 0 0 var(--hair) rgb(0 0 0 / .06);
+  --sh-xs: 0 1px 1px rgb(var(--shadow-rgb) / 0.05), 0 2px 2px rgb(var(--shadow-rgb) / 0.04), 0 5px 3px rgb(var(--shadow-rgb) / 0.03), 0 8px 3px rgb(var(--shadow-rgb) / 0.01);
+  --sh-sm: 0 2px 4px rgb(var(--shadow-rgb) / 0.06), 0 7px 7px rgb(var(--shadow-rgb) / 0.05), 0 16px 9px rgb(var(--shadow-rgb) / 0.03), 0 29px 11px rgb(var(--shadow-rgb) / 0.01);
+  --sh-md: 0 4px 8px rgb(var(--shadow-rgb) / 0.08), 0 14px 14px rgb(var(--shadow-rgb) / 0.07), 0 32px 19px rgb(var(--shadow-rgb) / 0.04), 0 57px 22px rgb(var(--shadow-rgb) / 0.01);
+  --sh-lg: 0 7px 14px rgb(var(--shadow-rgb) / 0.12), 0 27px 25px rgb(var(--shadow-rgb) / 0.1), 0 60px 34px rgb(var(--shadow-rgb) / 0.06), 0 106px 41px rgb(var(--shadow-rgb) / 0.02);
+}
+html.margin-skin[data-margin-theme="dark"] {
+  --shadow-rgb: 0 0 0; --ring: 0 0 0 var(--hair) rgb(255 255 255 / .12);
+  --sh-xs: 0 1px 1px rgb(var(--shadow-rgb) / 0.13), 0 2px 2px rgb(var(--shadow-rgb) / 0.11), 0 5px 3px rgb(var(--shadow-rgb) / 0.07), 0 8px 3px rgb(var(--shadow-rgb) / 0.02);
+  --sh-sm: 0 2px 4px rgb(var(--shadow-rgb) / 0.15), 0 7px 7px rgb(var(--shadow-rgb) / 0.13), 0 16px 9px rgb(var(--shadow-rgb) / 0.08), 0 29px 11px rgb(var(--shadow-rgb) / 0.02);
+  --sh-md: 0 4px 8px rgb(var(--shadow-rgb) / 0.2), 0 14px 14px rgb(var(--shadow-rgb) / 0.18), 0 32px 19px rgb(var(--shadow-rgb) / 0.1), 0 57px 22px rgb(var(--shadow-rgb) / 0.03);
+  --sh-lg: 0 7px 14px rgb(var(--shadow-rgb) / 0.31), 0 27px 25px rgb(var(--shadow-rgb) / 0.27), 0 60px 34px rgb(var(--shadow-rgb) / 0.16), 0 106px 41px rgb(var(--shadow-rgb) / 0.05), 0 166px 45px rgb(var(--shadow-rgb) / 0.01);
+}
+@media (min-resolution: 2dppx) { html.margin-skin { --hair: .5px; } }
+/* 映棱 BiliPrism · 搜索页与其他页面（全局样式）
+   html.margin-skin：所有接管的非首页页面；html.margin-search / margin-page：分页面版式。
+   html.margin-has-bg：铺了 Shader 背景，页面底色让出来。 */
+
+#margin-bg { position: fixed; inset: 0; z-index: -1; pointer-events: none; }
+html:not(.margin-has-bg) #margin-bg { display: none; }
+html.margin-has-bg.margin-skin body { background: transparent !important; }
+
+/* ── 通用：原生顶栏全部换成 BiliPrism 顶栏，内容让出 72px ── */
+html.margin-search #bili-header-container, html.margin-search .bili-header,
+html.margin-page #biliMainHeader, html.margin-page #bili-header-container, html.margin-page .bili-header,
+html.margin-page .international-header, html.margin-page #internationalHeader, html.margin-page .mini-header,
+html.margin-page .z-top-container, html.margin-page .bili-header-m { display: none !important; }
+html.margin-search body, html.margin-page body { padding-top: 72px !important; }
+html.margin-skin #app, html.margin-skin #__next, html.margin-skin .popular-container,
+html.margin-skin .search-layout, html.margin-skin .search-content { background: transparent !important; }
+html.margin-skin .bili-footer, html.margin-skin #biliMainFooter { background: transparent !important; }
+
+/* ── 搜索页：编辑式排版，和首页同一套语言 ── */
+html.margin-search .search-header { padding-top: 0; margin-top: 4px; margin-bottom: 14px; }
+/* 搜索框与映棱顶栏的搜索同一种样子：44px 玻璃胶囊、细描边、内高光、无黑色按钮（回车搜索） */
+html.margin-search .search-input-wrap {
+  height: 44px !important; width: 640px !important; max-width: calc(100vw - 96px); padding: 0 8px 0 16px !important; gap: 10px;
+  border-radius: 999px !important; border: 1px solid var(--m-line) !important;
+  background: color-mix(in srgb, var(--m-surface) 72%, transparent) !important; backdrop-filter: blur(16px) saturate(1.6);
+  box-shadow: inset 0 1px 0 rgb(255 255 255 / .55), var(--sh-sm) !important;
+  transition: background-color .2s, border-color .2s;
+}
+html.margin-search[data-margin-theme="dark"] .search-input-wrap { box-shadow: inset 0 1px 0 rgb(255 255 255 / .08), var(--sh-sm) !important; }
+html.margin-search .search-input-wrap:focus-within { background: var(--m-surface) !important; border-color: color-mix(in srgb, var(--m-ink) 18%, transparent) !important; }
+html.margin-search .search-input-el { flex: 1 !important; padding: 0 !important; margin: 0 !important; text-align: left !important; font: 400 14px/1 "Geist", "Margin Sans SC", "PingFang SC", "Microsoft YaHei", system-ui, sans-serif !important; color: var(--m-ink) !important; letter-spacing: 0; }
+html.margin-search .search-input-el::placeholder { color: var(--m-faint) !important; }
+html.margin-search .search-input-wrap svg, html.margin-search .search-input-wrap .search-input-icon { color: var(--m-faint) !important; width: 18px; height: 18px; }
+html.margin-search .search-button { display: none !important; }
+/* v0.23.0 清空按钮：B 站把它绝对定位在「搜索」按钮左边，按钮隐藏后就悬在中间——放回最右，做成小圆钮 */
+html.margin-search .search-input-wrap .search-icon { order: 1; flex: none; }
+html.margin-search .search-input-wrap .search-input-el { order: 2; }
+html.margin-search .search-input-wrap .clear-icon { order: 3; position: static !important; inset: auto !important; transform: none !important; flex: none; width: 28px !important; height: 28px !important; padding: 6px; margin: 0 !important; border-radius: 999px; box-sizing: border-box; background: var(--m-chip); fill: var(--m-muted) !important; color: var(--m-muted) !important; cursor: pointer; transition: background-color .15s, fill .15s; }
+html.margin-search .search-input-wrap .clear-icon path { fill: currentColor !important; }
+html.margin-search .search-input-wrap .clear-icon:hover { color: var(--m-ink) !important; background: color-mix(in srgb, var(--m-ink) 12%, transparent); }
+/* 聚焦压暗：输入时结果区暗下去，只留搜索框和联想 */
+html.margin-search body::after { content: ""; position: fixed; inset: 0; z-index: 39; pointer-events: none; opacity: 0; background: rgb(20 20 22 / .28); transition: opacity .3s cubic-bezier(.23, 1, .32, 1); }
+html.margin-search[data-margin-theme="dark"] body::after { background: rgb(0 0 0 / .5); }
+html.margin-search:has(.search-input-wrap:focus-within) body::after { opacity: 1; }
+
+/* 分类标签：衬线 + 底部细线指示 */
+html.margin-search .search-tabs { border-bottom: 1px solid var(--m-line); }
+html.margin-search .vui_tabs--nav-item { color: var(--m-muted) !important; font-size: 15px !important; }
+html.margin-search .vui_tabs--nav-item:hover { color: var(--m-ink) !important; }
+html.margin-search .vui_tabs--nav-item-active { color: var(--m-ink) !important; font-weight: 600 !important; }
+html.margin-search .vui_tabs--nav-item-active .vui_tabs--nav-text, html.margin-search .vui_tabs--nav-item-active { font-family: var(--m-serif) !important; }
+html.margin-search .vui_tabs--nav-bar, html.margin-search .vui_tabs--nav-link-active::after { background: var(--m-ink) !important; height: 2px !important; border-radius: 2px; }
+html.margin-search .vui_tabs--nav-num { font-family: var(--m-mono) !important; font-size: 11px !important; color: var(--m-faint) !important; }
+
+/* 排序 / 筛选：胶囊 */
+html.margin-search .search-conditions .vui_button, html.margin-search .conditions-order .vui_button,
+html.margin-search .search-condition-row .vui_button, html.margin-search .more-conditions .vui_button {
+  border-radius: 999px !important; border: 0 !important; background: transparent !important; color: var(--m-muted) !important; padding: 0 14px !important;
+}
+html.margin-search .vui_button--active, html.margin-search .search-conditions .vui_button--active,
+html.margin-search .search-condition-row .vui_button--active { background: var(--m-ink) !important; color: var(--m-canvas) !important; }
+html.margin-search .vui_button:not(.search-button):not(.vui_button--active):hover { color: var(--m-ink) !important; background: var(--m-chip) !important; }
+
+/* 视频卡片 */
+html.margin-search .bili-video-card__image, html.margin-search .bili-video-card__cover,
+html.margin-search .bili-video-card__image--wrap, html.margin-search .bili-video-card__image img,
+html.margin-search .media-card-image, html.margin-search .media-card img { border-radius: 12px !important; }
+html.margin-search .bili-video-card__stats { border-radius: 0 0 12px 12px !important; }
+html.margin-search .bili-video-card__wrap { transition: transform .35s cubic-bezier(.22, 1, .36, 1); }
+html.margin-search .bili-video-card:hover .bili-video-card__wrap { transform: translateY(-3px); }
+html.margin-search .bili-video-card__info--tit, html.margin-search .bili-video-card__info--tit a { color: var(--m-ink) !important; font-size: 14px !important; line-height: 22px !important; font-weight: 500; }
+html.margin-search .bili-video-card__info--tit em, html.margin-search .keyword { color: var(--m-accent) !important; font-style: normal; }
+html.margin-search .bili-video-card__info--bottom, html.margin-search .bili-video-card__info--author,
+html.margin-search .bili-video-card__info--date { color: var(--m-faint) !important; font-size: 12px !important; }
+html.margin-search .bili-video-card__info--date { font-family: var(--m-mono) !important; }
+
+/* 用户 / 番剧卡：表面卡片 */
+html.margin-search .user-list .b-user-info-card, html.margin-search .media-list .media-card,
+html.margin-search .search-user-card, html.margin-search .bangumi-pgc-list .media-card {
+  border-radius: var(--m-radius) !important; background: color-mix(in srgb, var(--m-surface) 78%, transparent) !important;
+}
+html.margin-search .user-name, html.margin-search .media-card-content-head-title, html.margin-search .text_ellipsis.user-name { font-family: var(--m-serif) !important; color: var(--m-ink) !important; }
+
+/* 分页 */
+html.margin-search .vui_pagenation--btn { border-radius: 999px !important; border: 0 !important; background: color-mix(in srgb, var(--m-surface) 80%, transparent) !important; color: var(--m-ink) !important; font-family: var(--m-mono) !important; }
+html.margin-search .vui_pagenation--btn-num.vui_button--active, html.margin-search .vui_pagenation--btn.vui_button--active { background: var(--m-ink) !important; color: var(--m-canvas) !important; }
+html.margin-search .vui_button--disabled { opacity: .45; }
+
+/* 广告 */
+html.margin-search .brand-ad-list, html.margin-search .activity-game-list, html.margin-search .search-ad-card,
+html.margin-search .bili-video-card__info--ad, html.margin-search .video-list-item:has(.bili-video-card__info--ad) { display: none !important; }
+
+/* ── 其他页面：热门 / 排行 / 番剧等，统一卡片圆角与表面 ── */
+html.margin-page .video-card__content img, html.margin-page .rank-item .img img,
+html.margin-page .video-card .cover, html.margin-page .bili-video-card__image { border-radius: 12px !important; }
+html.margin-page .popular-video-container .video-name, html.margin-page .rank-item .info .title { color: var(--m-ink) !important; }
+html.margin-page .tab-bar .tab-item.tab-item--active, html.margin-page .rank-tab.active { color: var(--m-ink) !important; }
+html.margin-search .bili-video-card__wrap { background: transparent !important; }
+/* 热门 / 排行页大量写死颜色，逐个改成主题色 */
+html.margin-page .video-card .video-name, html.margin-page .video-card__info .video-name,
+html.margin-page .popular-video-container .title, html.margin-page .rank-item .info .title,
+html.margin-page .tab-bar .tab-item, html.margin-page .tab-bar .tab-item span, html.margin-page .tab-item__text,
+html.margin-page .popular-top-tips, html.margin-page .weekly-header, html.margin-page .history-header { color: var(--m-ink) !important; }
+html.margin-page .video-card .up-name, html.margin-page .video-card .video-stat, html.margin-page .rank-item .detail,
+html.margin-page .rank-tips, html.margin-page .popular-tips { color: var(--m-muted) !important; }
+
+/* 搜索联想：盖在结果之上，不透明卡片 */
+html.margin-search .search-header, html.margin-search .search-input { position: relative; z-index: 40 !important; }
+html.margin-search .search-panel, html.margin-search .search-panel-popover {
+  z-index: 1003 !important; margin-top: 8px; padding: 6px !important;
+  background: var(--m-surface) !important; border: 1px solid var(--m-line) !important; border-radius: 16px !important;
+  box-shadow: var(--ring), var(--sh-md) !important;
+  transform-origin: top center; animation: m-panel-in .3s cubic-bezier(.23, 1, .32, 1) both;
+}
+@keyframes m-panel-in { from { opacity: 0; transform: translateY(-6px) scale(.98); clip-path: inset(0 0 70% 0 round 16px); } to { clip-path: inset(0 0 0 0 round 16px); } }
+html.margin-search .search-panel .suggest-item, html.margin-search .search-panel .history-item, html.margin-search .search-panel .trending-item { animation: m-opt-in .3s cubic-bezier(.23, 1, .32, 1) both; animation-delay: 60ms; }
+@keyframes m-opt-in { from { opacity: 0; transform: translateY(4px); } }
+html.margin-search .search-panel .suggestions, html.margin-search .search-panel .suggest-item { background: transparent !important; }
+html.margin-search .search-panel .suggest-item { border-radius: 10px; padding: 0 12px !important; color: var(--m-ink) !important; }
+html.margin-search .search-panel .suggest-item:hover, html.margin-search .search-panel .suggest-item.is-focus { background: var(--m-chip) !important; }
+html.margin-search .search-panel .suggest_high_light, html.margin-search .search-panel em { color: var(--m-accent) !important; font-style: normal; }
+/* B 站滚动后冒出的吸顶搜索条会和映棱顶栏叠在一起：隐藏它，顶栏里的搜索（/ 或 Ctrl+K）代替 */
+html.margin-search .search-fixed-header, html.margin-search .search-sticky-header { display: none !important; }

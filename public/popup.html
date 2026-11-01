@@ -1,0 +1,37 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<title>映棱 BiliPrism</title>
+<style>
+  :root{color-scheme:light dark;--bg:#f5f4f1;--ink:#17181a;--muted:#6f7177;--line:rgb(23 24 26 / .1);--chip:rgb(23 24 26 / .05);--accent:#00aeec}
+  @media (prefers-color-scheme:dark){:root{--bg:#141415;--ink:#ededee;--muted:#9a9ba0;--line:rgb(255 255 255 / .1);--chip:rgb(255 255 255 / .06)}}
+  *{box-sizing:border-box}
+  body{margin:0;width:300px;padding:20px;background:var(--bg);color:var(--ink);font:13px/1.5 "PingFang SC","Microsoft YaHei",system-ui,sans-serif}
+  h1{margin:0;font:600 20px/1 "Noto Serif SC","Songti SC",serif;letter-spacing:.04em}
+  .sub{margin:6px 0 18px;font:10px/1 ui-monospace,Menlo,monospace;letter-spacing:.22em;color:var(--muted)}
+  .row{display:flex;align-items:center;justify-content:space-between;padding:12px 0;border-top:1px solid var(--line)}
+  .sw{position:relative;width:40px;height:24px;border-radius:99px;background:var(--chip);border:1px solid var(--line);cursor:pointer;transition:background .2s}
+  .sw::after{content:"";position:absolute;top:2px;left:2px;width:18px;height:18px;border-radius:50%;background:#fff;box-shadow:0 1px 3px rgb(0 0 0 / .25);transition:transform .2s}
+  .sw[aria-checked=true]{background:var(--accent);border-color:transparent}
+  .sw[aria-checked=true]::after{transform:translateX(16px)}
+  .seg{display:flex;padding:3px;border-radius:10px;background:var(--chip)}
+  .seg button{border:0;background:none;color:var(--muted);font:inherit;padding:4px 10px;border-radius:7px;cursor:pointer}
+  .seg button[aria-pressed=true]{background:var(--bg);color:var(--ink);box-shadow:0 1px 3px rgb(0 0 0 / .12)}
+  .upd{display:none;margin:0 0 14px;padding:10px 12px;border-radius:10px;background:rgb(0 174 236 / .1);color:var(--ink);text-decoration:none;font-size:12px}
+  .upd b{color:var(--accent);font:600 11px/1 ui-monospace,Menlo,monospace;margin-left:4px}
+  .upd.on{display:block}
+  .foot{margin-top:6px;font-size:11px;color:var(--muted)}
+</style>
+</head>
+<body>
+  <h1>映棱</h1>
+  <div class="sub">BiliPrism · v<span id="ver"></span></div>
+  <a class="upd" id="upd" target="_blank" rel="noopener">有新版本<b id="updv"></b> · 点此下载</a>
+  <div class="row"><span>启用 BiliPrism</span><button class="sw" id="enabled" role="switch" aria-checked="true" aria-label="启用 BiliPrism"></button></div>
+  <div class="row"><span>其他页面重设计</span><button class="sw" id="watch" role="switch" aria-checked="true" aria-label="其他页面重设计"></button></div>
+  <div class="row"><span>主题</span><div class="seg" id="theme"><button data-v="auto">自动</button><button data-v="light">亮</button><button data-v="dark">暗</button></div></div>
+  <div class="foot">非 B 站官方扩展 · 设置即时生效</div>
+  <script src="popup.js"></script>
+</body>
+</html>

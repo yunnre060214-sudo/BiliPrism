@@ -1,0 +1,48 @@
+import { previewUrl } from '../api/play';
+import { cardData } from './card';
+import { h } from './dom';
+
+/** 封面悬停 0.5 秒后静音播放低清预览，进度细线在底部 */
+export function attachPreview(container: HTMLElement, enabled: () => boolean): void {
+  let timer = 0;
+  let active: { cover: HTMLElement; video: HTMLVideoElement; bar: HTMLElement } | null = null;
+
+  const stop = () => {
+    clearTimeout(timer);
+    if (!active) return;
+    const { cover, video, bar } = active;
+    active = null;
+    cover.classList.remove('playing');
+    video.pause();
+    setTimeout(() => { video.removeAttribute('src'); video.load(); video.remove(); bar.remove(); }, 250);
+  };
+
+  container.addEventListener('mouseover', (e) => {
+    const cover = (e.target as Element).closest?.('.cover') as HTMLElement | null;
+    if (!cover || cover === active?.cover || !enabled()) return;
+    const card = cover.closest('.card');
+    const v = card && cardData.get(card);
+    if (!v?.cid) return;
+    stop();
+    timer = window.setTimeout(async () => {
+      const url = await previewUrl(v.bvid, v.cid);
+      if (!url || !cover.matches(':hover')) return;
+      const video = h('video', { muted: true, playsinline: true, loop: true, preload: 'auto', class: 'pv' }) as HTMLVideoElement;
+      video.muted = true;
+      const bar = h('span', { class: 'pv-bar' });
+      video.addEventListener('timeupdate', () => { if (video.duration) bar.style.transform = `scaleX(${video.currentTime / video.duration})`; });
+      video.addEventListener('playing', () => cover.classList.add('playing'), { once: true });
+      video.src = url;
+      cover.append(video, bar);
+      active = { cover, video, bar };
+      video.play().catch(() => {});
+    }, 500);
+  });
+  container.addEventListener('mouseout', (e) => {
+    const cover = (e.target as Element).closest?.('.cover');
+    if (!cover) return;
+    const to = e.relatedTarget as Node | null;
+    if (to && cover.contains(to)) return;
+    if (cover === active?.cover || !active) stop();
+  });
+}

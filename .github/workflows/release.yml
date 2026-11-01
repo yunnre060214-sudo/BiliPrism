@@ -1,0 +1,47 @@
+name: Build and Release
+on:
+  push:
+    branches: [main]
+    paths:
+      - package.json
+      - .github/workflows/release.yml
+  workflow_dispatch:
+permissions:
+  contents: write
+concurrency:
+  group: biliprism-release
+  cancel-in-progress: false
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      - run: npm test
+      - run: npm run pack
+      - run: npx playwright install --with-deps chromium
+      - run: npm run test:smoke
+      - run: npm run test:enhancements
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: validation-and-package
+          path: |
+            release/
+            tests/artifacts/
+      - name: Create versioned release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          version="$(node -p "JSON.parse(require('fs').readFileSync('package.json','utf8')).version")"
+          tag="v$version"
+          if gh release view "$tag" >/dev/null 2>&1; then
+            echo "Release $tag already exists; keeping its assets unchanged."
+            exit 0
+          fi
+          gh release create "$tag" "release/BiliPrism-v$version-chromium.zip" "release/SHA256SUMS.txt" --target "$GITHUB_SHA" --title "BiliPrism $tag · 本地使用版" --notes-file docs/RELEASE_NOTES.md

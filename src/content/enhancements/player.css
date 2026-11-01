@@ -1,0 +1,8 @@
+/* Wide layout scopes only to video pages; native fullscreen keeps its own layout. */
+html.biliprism-wide .video-container-v1{display:block!important;width:calc(100% - 64px)!important;max-width:1640px!important;margin-left:auto!important;margin-right:auto!important}
+html.biliprism-wide .video-container-v1>.left-container{width:100%!important;max-width:none!important}
+html.biliprism-wide .video-container-v1>.right-container{width:100%!important;margin:24px 0 0!important}
+html.biliprism-wide #bilibili-player,html.biliprism-wide #playerWrap,html.biliprism-wide #bilibili-player-wrap{width:100%!important;max-width:none!important}
+#biliprism-volume-osd{position:absolute;z-index:2147483647;top:28px;left:50%;transform:translateX(-50%);padding:8px 18px;border-radius:12px;background:#15151acc;color:#fff;font:14px/1.5 system-ui;pointer-events:none;backdrop-filter:blur(12px)}
+#biliprism-volume-osd[hidden]{display:none}
+@media(max-width:800px){html.biliprism-wide .video-container-v1{width:calc(100% - 24px)!important}}

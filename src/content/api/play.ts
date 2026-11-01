@@ -1,0 +1,14 @@
+import { getWbi } from './http';
+
+const cache = new Map<string, Promise<string | null>>();
+
+/** 低清 MP4 直链，用于封面悬停预览 */
+export function previewUrl(bvid: string, cid: number): Promise<string | null> {
+  const key = `${bvid}:${cid}`;
+  if (!cache.has(key)) {
+    cache.set(key, getWbi<{ durl?: { url: string }[] }>('/x/player/wbi/playurl', {
+      bvid, cid, qn: 16, fnval: 1, fnver: 0, fourk: 0, platform: 'html5', high_quality: 1,
+    }).then((d) => d.durl?.[0]?.url?.replace(/^http:/, 'https:') ?? null).catch(() => null));
+  }
+  return cache.get(key)!;
+}

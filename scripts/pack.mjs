@@ -1,0 +1,11 @@
+import { readFileSync, mkdirSync, writeFileSync, rmSync } from 'node:fs';
+import { execFileSync } from 'node:child_process';
+import { createHash } from 'node:crypto';
+const { version } = JSON.parse(readFileSync('package.json', 'utf8'));
+mkdirSync('release', { recursive: true });
+const file = `BiliPrism-v${version}-chromium.zip`;
+rmSync(`release/${file}`, { force: true });
+execFileSync('zip', ['-qrX', `../release/${file}`, '.'], { cwd: 'dist' });
+const hash = createHash('sha256').update(readFileSync(`release/${file}`)).digest('hex');
+writeFileSync('release/SHA256SUMS.txt', `${hash}  ${file}\n`);
+console.log(`release/${file}`);

@@ -1,0 +1,25 @@
+{
+  "name": "biliprism",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "BiliPrism 映棱 · Bilibili 网页增强扩展",
+  "license": "SEE LICENSE IN THIRD_PARTY_NOTICES.md",
+  "scripts": {
+    "build": "tsc --noEmit && node scripts/build.mjs",
+    "typecheck": "tsc --noEmit",
+    "test": "node --test tests/unit.test.mjs",
+    "test:smoke": "node tests/smoke.mjs",
+    "test:enhancements": "node tests/enhancements.mjs",
+    "pack": "npm run build && node scripts/pack.mjs"
+  },
+  "dependencies": {
+    "qrcode-generator": "2.0.4"
+  },
+  "devDependencies": {
+    "@types/chrome": "0.1.38",
+    "typescript": "5.9.3",
+    "vite": "7.2.2",
+    "playwright": "1.56.1"
+  }
+}
