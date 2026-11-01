@@ -19,6 +19,7 @@ try{
     const host=document.querySelector('.left-container');
     host.insertAdjacentHTML('beforeend','<div class="video-info-detail">手机　看到 0:19 / 1:00</div><div class="video-desc-container"><p class="desc-info-text">清晰正文与视频简介</p></div><div class="video-pod">合集选集</div>');
     const bc=document.createElement('bili-comments'),root=bc.attachShadow({mode:'open'});root.innerHTML='<style>:host{--bg1:#fff;--text1:#18191c}#content{background:var(--bg1);color:var(--text1)}</style><div id="content">原生评论明暗适配</div>';document.getElementById('commentapp').append(bc);
+    const rich=document.createElement('bili-rich-text'),rr=rich.attachShadow({mode:'open'});rr.innerHTML='<style>#contents{font:400 12px/1.4 serif}#contents span{font:400 11px serif}</style><div id="contents"><p><span>真实富文本正文</span></p></div>';root.append(rich);
   });
   const colors=()=>page.evaluate(()=>{const cs=s=>getComputedStyle(document.querySelector(s)),sr=document.querySelector('bili-comments').shadowRoot;
     const comment=getComputedStyle(sr.querySelector('#content')),meta=cs('.video-info-detail');
@@ -31,6 +32,8 @@ try{
   await patch({appearance:{fontSize:18,fontWeight:600,lineHeight:2}});
   await page.waitForFunction(()=>getComputedStyle(document.querySelector('.desc-info-text')).fontSize==='18px');
   c=await colors();assert.equal(c.meta[1],'17px');assert.equal(c.meta[2],'600');
+  const rich=await page.locator('bili-rich-text #contents span').evaluate(el=>{const s=getComputedStyle(el);return [s.fontSize,s.fontWeight,s.fontFamily];});
+  assert.equal(rich[0],'18px');assert.equal(rich[1],'600');assert.doesNotMatch(rich[2],/(^|, )serif(,|$)/);
   assert.deepEqual(errors,[]);console.log('PASS 原生视频与评论深浅色、跟随系统、字号字重实时切换、视频画布保留');
   writeFileSync('tests/artifacts/appearance-results.json',JSON.stringify(results,null,2));
 }finally{await ctx.close();rmSync(dir,{recursive:true,force:true});}

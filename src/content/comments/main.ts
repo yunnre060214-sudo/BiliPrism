@@ -207,7 +207,8 @@ function updateTools(s: State): void {
 const themeSheet=new CSSStyleSheet();
 themeSheet.replaceSync(`
 :host{--bg1:var(--m-surface,#fff)!important;--bg2:var(--m-canvas,#f5f4f1)!important;--bg3:var(--m-chip,#e9e9e6)!important;--bg1_float:var(--m-surface,#fff)!important;--bg2_float:var(--m-chip,#e9e9e6)!important;--text1:var(--m-ink,#202124)!important;--text2:var(--m-muted,#555b64)!important;--text3:var(--m-faint,#626873)!important;--text4:var(--m-faint,#626873)!important;--line_regular:var(--m-line,#d8d9dc)!important;--line_light:var(--m-line,#d8d9dc)!important;--graph_bg_regular:var(--m-chip,#e9e9e6)!important;color:var(--m-ink,#202124);font-family:"Segoe UI","PingFang SC","Microsoft YaHei","Noto Sans CJK SC",system-ui,sans-serif;-webkit-font-smoothing:auto;text-rendering:auto}
-#content,#message,#input,.brt-root,.brt-editor{font-size:var(--bp-font-size,15px)!important;font-weight:var(--bp-font-weight,500)!important;line-height:var(--bp-line-height,1.7)!important;font-family:inherit!important;color:var(--text1)!important}
+#content,#contents,#message,#input,.brt-root,.brt-editor{font-size:var(--bp-font-size,15px)!important;font-weight:var(--bp-font-weight,500)!important;line-height:var(--bp-line-height,1.7)!important;font-family:inherit!important;color:var(--text1)!important}
+#contents :is(p,span,a){font-family:inherit!important;font-size:inherit!important;font-weight:inherit!important;line-height:inherit!important}
 #footer,#pubdate,#count,#user-name{font-family:inherit!important;font-size:var(--bp-meta-size,14px)!important;font-weight:var(--bp-font-weight,500)!important;line-height:1.5!important}
 `);
 const themed=new Set<ShadowRoot>();
