@@ -85,13 +85,8 @@ try {
     assert.equal(JSON.parse(readFileSync(await file2.path(), 'utf8').replace(/^\uFEFF/, '')).body[0].content, 'Hello');
   });
   await check('全屏滚轮调音与菜单滚动排除', async () => {
-    await page.evaluate(() => {
-      const b = document.createElement('button'); b.id = 'enter-fs'; b.textContent = 'Fullscreen';
-      b.onclick = () => document.getElementById('bilibili-player').requestFullscreen();
-      document.body.append(b);
-    });
-    await page.locator('#enter-fs').click({ force: true });
-    await page.waitForFunction(() => !!document.fullscreenElement);
+    await page.evaluate(async () => { await document.getElementById('bilibili-player').requestFullscreen(); });
+    await page.waitForFunction(() => !!document.fullscreenElement, null, { timeout: 5000 });
     await media().dispatchEvent('wheel', { deltaY: -120, bubbles: true, cancelable: true });
     assert.ok(Math.abs(await media().evaluate(el => el.volume) - .55) < .001);
     const scrolled = await page.evaluate(() => {
