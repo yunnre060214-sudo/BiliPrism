@@ -82,7 +82,7 @@ function layout(state: State): void {
       visited.add(parent); if (collapsed.has(parent)) hidden = true;
       parent = byId.get(parent)?.parentId ?? null;
     }
-    n.item.dataset.bpReplyDepth = String(n.depth);
+    if (n.item.dataset.bpReplyDepth !== String(n.depth)) n.item.dataset.bpReplyDepth = String(n.depth);
     n.item.toggleAttribute('data-bp-reply-hidden', hidden);
     const indent = n.depth*step+'px', order = String(n.order);
     if (n.item.style.getPropertyValue('--bp-tree-indent') !== indent) n.item.style.setProperty('--bp-tree-indent',indent);
