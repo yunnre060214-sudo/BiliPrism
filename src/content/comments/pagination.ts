@@ -34,12 +34,16 @@ export function rememberPage(r: PaginatedRenderer, p: ReplyPages): void {
   if (r.showPagination) p.pages.set(Number(r.currentPage) || 1, r.list.slice());
 }
 async function request(r: PaginatedRenderer, p: ReplyPages, run: () => unknown, active: () => boolean): Promise<void> {
-  const before = r.list;
+  const before = r.list, signature = JSON.stringify(before?.map(replyId));
   const result = run();
-  if (result && typeof (result as Promise<unknown>).then === 'function') await result;
+  const promised = !!result && typeof (result as Promise<unknown>).then === 'function';
+  let sawSpinner = r.showSpinner === true;
+  if (promised) await result;
   const start = Date.now();
   while (active() && !p.stopped && r.isConnected) {
-    if (r.showSpinner !== true && Array.isArray(r.list) && r.list !== before) {
+    if(r.showSpinner === true) sawSpinner=true;
+    const changed = r.list !== before || JSON.stringify(r.list?.map(replyId)) !== signature;
+    if (r.showSpinner !== true && Array.isArray(r.list) && (changed || promised || sawSpinner)) {
       await r.updateComplete; return;
     }
     if (Date.now() - start > 8000) throw new Error('原生回复加载未完成，请稍后重试');
@@ -50,6 +54,7 @@ async function request(r: PaginatedRenderer, p: ReplyPages, run: () => unknown, 
 export async function expandReplyPages(r: PaginatedRenderer, p: ReplyPages, limit: number,
   active: () => boolean, rendered: () => ReplyData[], progress: () => void): Promise<void> {
   if (p.busy) return;
+  if(r.showSpinner) throw new Error('原生回复正在加载，请稍后重试');
   rememberPage(r, p);
   p.busy = true; p.stopped = false;
   const interactions = new Map<string, ReplyData>();
@@ -81,8 +86,9 @@ export async function expandReplyPages(r: PaginatedRenderer, p: ReplyPages, limi
     }
     if (!p.pages.size) p.pages.set(Number(r.currentPage) || 1, r.list.slice());
     while (active() && !p.stopped && loaded < limit) {
-      const next = Array.from({ length: totalPages(r) }, (_, i) => i+1).find(n => !p.pages.has(n));
-      if (!next) break;
+      let next=1;
+      while(p.pages.has(next)&&next<=totalPages(r)) next++;
+      if(next>totalPages(r)) break;
       capture();
       await request(r, p, () => r.handleChangePage!({ idx: next-1, clickable: true }), active);
       p.pages.set(next, r.list!.slice()); loaded++;

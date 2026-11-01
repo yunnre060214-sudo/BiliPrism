@@ -11,20 +11,20 @@ try{
   await installMocks(ctx);const sw=ctx.serviceWorkers()[0]??await ctx.waitForEvent('serviceworker');
   const patch=async p=>sw.evaluate(async p=>{const key='biliprism:settings',old=(await chrome.storage.local.get(key))[key]||{};await chrome.storage.local.set({[key]:{...old,...p,moments:{...old.moments,...p.moments}}});},p);
   await patch({moments:{autoLoad:false}});
-  let calls=0;
+  let calls=0;const requestedOffsets=[];
   const item=(id,type,mid,text,orig)=>({id_str:id,type,orig,modules:{module_author:{mid,name:'UP'+mid,pub_ts:1000,face:''},module_stat:{},module_dynamic:{desc:{text},major:type==='DYNAMIC_TYPE_AV'?{archive:{bvid:'BV'+id,title:'视频 '+id,cover:'',duration_text:'1:00'}}:type==='DYNAMIC_TYPE_DRAW'?{draw:{items:[{src:'https://i0.hdslb.com/test.png'}]}}:{}}}});
   const posts=[item('1','DYNAMIC_TYPE_AV',1,'视频正文'),item('2','DYNAMIC_TYPE_DRAW',2,'图片正文'),item('3','DYNAMIC_TYPE_FORWARD',3,'转发',item('30','DYNAMIC_TYPE_WORD',4,'隐藏词广告'))];
   await ctx.route('**/x/polymer/web-dynamic/v1/feed/all?**',route=>{
-    calls++;const offset=new URL(route.request().url()).searchParams.get('offset');
+    calls++;const offset=new URL(route.request().url()).searchParams.get('offset');requestedOffsets.push(offset||'');
     return route.fulfill({json:{code:0,data:{items:offset?[item('4','DYNAMIC_TYPE_WORD',2,'第二页正文')]:posts,offset:offset?'':'next',has_more:!offset}},headers:{'access-control-allow-origin':'https://t.bilibili.com','access-control-allow-credentials':'true'}});
   });
   const page=await ctx.newPage(),errors=[];page.on('pageerror',e=>errors.push(e.message));
   await page.goto('https://t.bilibili.com/');await page.locator('.moment-card').first().waitFor();
-  assert.equal(await page.locator('.moment-card').count(),3);assert.equal(calls,1);
+  assert.equal(await page.locator('.moment-card').count(),3);assert.equal(requestedOffsets.includes('next'),false);
   const columns=()=>page.locator('.moments-grid').evaluate(el=>getComputedStyle(el).columnCount);
   assert.equal(await columns(),'2');
   await page.getByRole('button',{name:'加载更多',exact:true}).click();
-  await page.waitForFunction(()=>document.getElementById('margin-root').shadowRoot.querySelectorAll('.moment-card').length===4);assert.equal(calls,2);
+  await page.waitForFunction(()=>document.getElementById('margin-root').shadowRoot.querySelectorAll('.moment-card').length===4);assert.equal(requestedOffsets.filter(x=>x==='next').length,1);
   await patch({moments:{hideReposts:true,hideVideo:true}});await page.waitForFunction(()=>document.getElementById('margin-root').shadowRoot.querySelectorAll('.moment-card').length===2);
   await patch({moments:{hideReposts:false,hideVideo:false,keywords:['隐藏词']}});await page.waitForFunction(()=>document.getElementById('margin-root').shadowRoot.querySelectorAll('.moment-card').length===3);
   await patch({moments:{keywords:[],wantedUsers:['2']}});

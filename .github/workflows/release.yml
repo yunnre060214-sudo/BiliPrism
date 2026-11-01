@@ -28,13 +28,21 @@ jobs:
       - run: npm ci
       - run: npm test
       - run: npm run pack
+        id: pack
       - run: npx playwright install --with-deps chromium
+        id: browser
       - run: npm run test:appearance
+        if: ${{ !cancelled() && steps.browser.outcome == 'success' }}
       - run: npm run test:moments
+        if: ${{ !cancelled() && steps.browser.outcome == 'success' }}
       - run: npm run test:comments
+        if: ${{ !cancelled() && steps.browser.outcome == 'success' }}
       - run: npm run test:hydration
+        if: ${{ !cancelled() && steps.browser.outcome == 'success' }}
       - run: npm run test:enhancements
+        if: ${{ !cancelled() && steps.browser.outcome == 'success' }}
       - run: npm run test:smoke
+        if: ${{ !cancelled() && steps.browser.outcome == 'success' }}
       - uses: actions/upload-artifact@v4
         if: always()
         with:

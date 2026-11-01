@@ -25,6 +25,10 @@ BiliPrism 修改了品牌、存储命名空间、构建与发布流程，替换�
 
 `src/content/comments/geometry.ts` preserves the shared SVG branch geometry from `src/utils/commentReplyTree.ts`. The comment data access, parent-first traversal, time ordering, indentation and branch controls in `src/content/comments/{tree,main}.ts` adapt the native comment-tree approach in `src/inject/index.ts`. BiliPrism uses CSS order without moving native reply nodes or Lit repeat markers, and reads public custom-element data in the MAIN world without network interception. Missing off-page parents retain the native reply prefix; unknown relationships are not guessed.
 
+`src/content/comments/pagination.ts` adapts the sequential batch expansion in `expandAllCommentReplies` from `src/inject/index.ts`. It calls the existing renderer's pagination methods and assigns its reactive list without patching component prototypes or fetching a separate API. Loaded pages are deduplicated and local interaction state is retained.
+
+`src/content/ui/feedpage.ts`, `src/content/moments/`, and the Moments settings in `src/content/ui/settings-custom.ts` adapt the layout and independently configurable components, type/keyword/user filters, wanted users and pinned uploader concepts in `src/contentScripts/views/Moments/Moments.vue` and `src/components/Settings/PluginComponentsAndPages/Moments/Moments.vue`. BiliPrism integrates these into its existing DOM shell and API layer; this is an adapted subset, not the entire BewlyCat application. PGC/collection attachment and rich-text mapping follow `src/components/MomentCard/mapMoment.ts`.
+
 ## qrcode-generator
 
 Copyright (c) 2009 Kazuhiko Arase. MIT license, included in `licenses/qrcode-generator-MIT.txt`. Used for account sign-in QR codes inherited from MARGIN. Build-only dependencies retain their package licenses.
