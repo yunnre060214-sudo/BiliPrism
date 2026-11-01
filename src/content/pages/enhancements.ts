@@ -146,7 +146,7 @@ export async function startPlayerEnhancements(): Promise<void> {
       }
       const exportButton = root.querySelectorAll<HTMLButtonElement>('button')[1];
       exportButton.hidden = selects[2].hidden = !settings.player.subtitleExport;
-      if (!settings.player.subtitleExport) selects[1].hidden = true;
+      selects[1].hidden = !settings.player.subtitleExport || !selects[1].options.length;
     }
     syncWheel();
   };

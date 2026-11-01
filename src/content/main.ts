@@ -142,7 +142,8 @@ function trackKeyboard(): void {
 async function start(): Promise<void> {
   injectFonts();
   trackKeyboard();
-  startTracking(); // 足迹在所有 B 站页面记录，不只首页
+  onSettingsChange((next, prev) => { if (next.enabled !== prev.enabled) location.reload(); });
+  void loadSettings().then(s => { if (s.enabled && !offByUrl()) startTracking(); });
   if (isWatch()) return startWatch();
   const sm = spaceMatch();
   // 空间页的投稿接口依赖原版脚本写的指纹 cookie，不拦会 412
