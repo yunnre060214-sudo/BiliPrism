@@ -10,10 +10,11 @@ permissions:
   contents: write
 concurrency:
   group: biliprism-release
-  cancel-in-progress: false
+  cancel-in-progress: true
 jobs:
   release:
     runs-on: ubuntu-24.04
+    timeout-minutes: 15
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -40,6 +41,11 @@ jobs:
         run: |
           version="$(node -p "JSON.parse(require('fs').readFileSync('package.json','utf8')).version")"
           tag="v$version"
+          current_head="$(gh api "repos/$GITHUB_REPOSITORY/git/ref/heads/main" --jq .object.sha)"
+          if [ "$current_head" != "$GITHUB_SHA" ]; then
+            echo "A newer main commit is available; leaving release creation to that run."
+            exit 0
+          fi
           if gh release view "$tag" >/dev/null 2>&1; then
             echo "Release $tag already exists; keeping its assets unchanged."
             exit 0
