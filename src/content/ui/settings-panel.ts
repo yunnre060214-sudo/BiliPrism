@@ -6,6 +6,7 @@ import { SHADER_IDS, SHADER_NAMES } from '../bg/shaders';
 import { block, chipInput, rangeSlider, row, segmented, stepSlider, toast, toggle } from './controls';
 import { fmtCount, h, icon, ICONS } from './dom';
 import { createSheet, type Sheet } from './sheet';
+import { customSettings } from './settings-custom';
 
 export interface SettingsPanel { sheet: Sheet; sync(s: Settings): void }
 
@@ -13,6 +14,19 @@ export function createSettingsPanel(get: () => Settings, currentShader: () => Sh
   const sheet = createSheet({ title: '设置', eyebrow: 'Preferences', width: 420 });
   const save = (patch: Partial<Settings>) => saveSettings(patch);
   const s0 = get();
+  const custom = customSettings(get);
+  const search = h('input', { type: 'search', class: 'settings-search', placeholder: '搜索设置，例如：字号、楼层、动态', 'aria-label': '搜索设置' });
+  search.addEventListener('input', () => {
+    const q = search.value.trim().toLocaleLowerCase();
+    for (const section of sheet.body.querySelectorAll<HTMLElement>('.group')) {
+      const heading = section.querySelector('h3')?.textContent?.toLocaleLowerCase() ?? '';
+      const all = !q || heading.includes(q);
+      const entries = [...section.querySelectorAll<HTMLElement>(':scope > .row, :scope > .block')];
+      entries.forEach(n => { n.hidden = !all && !n.textContent?.toLocaleLowerCase().includes(q); });
+      section.hidden = !all && !entries.some(n => !n.hidden);
+    }
+  });
+  sheet.body.append(search);
 
   const commentTree = toggle(s0.commentTree, '树状评论楼层', v => save({ commentTree: v }));
   const theme = segmented<Theme>([['auto', '跟随系统'], ['light', '亮色'], ['dark', '暗色']], s0.theme, (v) => save({ theme: v }));
@@ -123,6 +137,7 @@ export function createSettingsPanel(get: () => Settings, currentShader: () => Sh
       row('宽屏布局', '扩大视频区域并把推荐列表放到下方', wide),
       row('字幕导出', 'Ctrl / ⌘ + K 打开命令面板，选择「导出字幕」', subtitle)),
     h('section', { class: 'group' }, h('h3', {}, '评论区'), row('树状评论楼层', 'BewlyCat 树状层级、连线与分支折叠；保留原生回复与翻页', commentTree)),
+    ...custom.sections,
     h('section', { class: 'group' }, h('h3', {}, '推荐过滤'),
       block('屏蔽关键词', '标题包含即隐藏', kw),
       block('屏蔽 UP 主', '卡片右上角也能一键屏蔽', ups),
@@ -136,6 +151,7 @@ export function createSettingsPanel(get: () => Settings, currentShader: () => Sh
   return {
     sheet,
     sync(s) {
+      custom.sync(s);
       theme.set(s.theme);
       commentTree.setAttribute('aria-checked', String(s.commentTree));
       wheel.setAttribute('aria-checked', String(s.player.wheelVolume));

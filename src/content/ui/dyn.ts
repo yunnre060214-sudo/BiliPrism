@@ -25,11 +25,14 @@ export function dynCard(d: Dyn, nested = false, withAuthor = false): HTMLElement
       d.article.cover ? img(d.article.cover, 320, 200) : null,
       h('span', {}, h('b', {}, d.article.title), h('span', {}, d.article.desc))));
   }
+  if (d.attachment) media.push(h('a',{class:'dy-article',href:d.attachment.url,...ext},
+    d.attachment.cover?img(d.attachment.cover,480,270):null,
+    h('span',{},h('b',{},d.attachment.title),h('span',{},d.attachment.desc))));
   if (d.orig) media.push(h('div', { class: 'dy-orig' }, h('div', { class: 'dy-orig-by' }, `@${d.orig.author}`), dynCard(d.orig, true)));
 
   const body = h('div', { class: 'dy-body' },
     d.title ? h('h3', { class: 'dy-title' }, d.title) : null,
-    d.text ? h('p', { class: 'dy-text' }, d.text) : null,
+    d.text ? h('p', { class: 'dy-text' }, ...(d.segments?.length ? d.segments.map(n => n.image ? h('img',{class:'dy-emoji',src:n.image,alt:n.text,loading:'lazy',referrerpolicy:'no-referrer'}) : n.url ? h('a',{href:n.url,...ext},n.text) : n.text) : [d.text])) : null,
     ...media);
   if (nested) return h('div', { class: 'dy nested' }, body);
   const open = () => h('a', { class: 'dy-open', href: d.url, ...ext, title: '查看详情' }, icon(ICONS.arrow));
@@ -56,6 +59,7 @@ function kindLabel(d: Dyn): string {
   if (d.orig) return 'REPOST';
   if (d.video) return 'VIDEO';
   if (d.article) return 'ARTICLE';
+  if (d.attachment) return d.attachment.kind;
   if (d.pics.length) return 'PHOTO';
   return 'NOTE';
 }

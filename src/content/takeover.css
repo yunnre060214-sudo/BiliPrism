@@ -332,3 +332,10 @@ a.sp-stat:hover b { color: var(--accent); }
   .ms-nav { position: static; flex-direction: row; flex-wrap: wrap; }
   .ms-h1 { width: 100%; }
 }
+
+/* Information text must not fall back to small monospace CJK glyphs. */
+:is(.hi-note,.hi-badge,.hi-time,.dy-stat,.dy-eyebrow,.dy-vmeta,.vr-note,.ms-day,.wh-sn time,.wh-m time,.fd-hot-list i){font-family:var(--sans);font-size:var(--bp-meta-size,14px);font-weight:var(--bp-font-weight,500);line-height:1.5;letter-spacing:normal;-webkit-font-smoothing:auto;text-rendering:auto}
+:is(.dy-text,.dy-vdesc){font-weight:var(--bp-font-weight,500);line-height:var(--bp-line-height,1.7)}
+
+.dy-text .dy-emoji{display:inline-block;width:1.4em;height:1.4em;vertical-align:middle;object-fit:contain}
+.dy-text a{color:var(--accent-text)}

@@ -13,7 +13,9 @@
     "test:enhancements": "node tests/enhancements.mjs",
     "pack": "npm run build && node scripts/pack.mjs",
     "test:hydration": "node tests/hydration.mjs",
-    "test:comments": "node tests/comments.mjs"
+    "test:comments": "node tests/comments.mjs",
+    "test:appearance": "node tests/appearance.mjs",
+    "test:moments": "node tests/moments.mjs"
   },
   "dependencies": {
     "qrcode-generator": "2.0.4"

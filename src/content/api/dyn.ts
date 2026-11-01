@@ -8,6 +8,8 @@ export interface Dyn {
   video?: { bvid: string; title: string; cover: string; dur: string; play: string; desc: string };
   pics: string[];
   article?: { title: string; cover: string; desc: string; url: string };
+  segments?: { text: string; url?: string; image?: string }[];
+  attachment?: { title: string; cover: string; desc: string; url: string; kind: string };
   orig?: Dyn | null;
   stat: { comment: number; forward: number; like: number };
   url: string;
@@ -15,6 +17,11 @@ export interface Dyn {
 
 const https = (u: unknown) => String(u ?? '').replace(/^\/\//, 'https://').replace(/^http:/, 'https:');
 
+const safeLink = (value: unknown) => {
+  if(typeof value !== 'string' || !value.trim()) return '';
+  try { const u = new URL(https(value), 'https://www.bilibili.com'); return /^https?:$/.test(u.protocol) ? u.href : ''; } catch { return ''; }
+};
+const FEATURES = 'itemOpusStyle,listOnlyfans,opusBigCover,onlyfansVote,decorationCard,onlyfansAssetsV2,forwardListHidden,ugcDelete,onlyfansQaCard';
 export function toDyn(it: any): Dyn | null {
   if (!it?.modules) return null;
   const m = it.modules, a = m.module_author ?? {}, d = m.module_dynamic ?? {}, s = m.module_stat ?? {};
@@ -27,8 +34,8 @@ export function toDyn(it: any): Dyn | null {
     stat: { comment: s.comment?.count ?? 0, forward: s.forward?.count ?? 0, like: s.like?.count ?? 0 },
     url: `https://www.bilibili.com/opus/${it.id_str}`,
   };
-  if (major.archive) {
-    const v = major.archive;
+  if (major.archive || major.ugc_season?.bvid) {
+    const v = major.archive ?? major.ugc_season;
     out.video = { bvid: v.bvid, title: v.title, cover: https(v.cover), dur: v.duration_text ?? '', play: v.stat?.play ?? '', desc: v.desc ?? '' };
     out.url = `https://www.bilibili.com/video/${v.bvid}`;
   }
@@ -38,19 +45,30 @@ export function toDyn(it: any): Dyn | null {
     const r = major.article;
     out.article = { title: r.title, cover: https(r.covers?.[0]), desc: r.desc ?? '', url: https(r.jump_url) };
   }
+  const rich = opus?.summary?.rich_text_nodes ?? d.desc?.rich_text_nodes;
+  if (Array.isArray(rich)) out.segments = rich.map((n: any) => ({
+    text: String(n.text ?? n.orig_text ?? ''),
+    url: n.jump_url ? safeLink(n.jump_url) : n.type === 'RICH_TEXT_NODE_TYPE_AT' && /^\d+$/.test(String(n.rid)) ? `https://space.bilibili.com/${n.rid}` : undefined,
+    image: n.type === 'RICH_TEXT_NODE_TYPE_EMOJI' ? safeLink(n.emoji?.webp_url || n.emoji?.icon_url) : undefined,
+  }));
+  const extra = major.pgc ?? major.common ?? major.upower_common;
+  if (extra && !out.video && !out.article) out.attachment = {
+    title: extra.title ?? '查看动态内容', cover: https(extra.cover), desc: extra.desc ?? '',
+    url: safeLink(extra.jump_url) || `https://t.bilibili.com/${out.id}`, kind: major.pgc ? 'PGC' : 'LINK',
+  };
   if (it.orig) out.orig = toDyn(it.orig);
   return out;
 }
 
 export async function spaceDynamics(mid: number, offset: string): Promise<{ list: Dyn[]; offset: string; more: boolean }> {
-  const d = await getJSON<any>('/x/polymer/web-dynamic/v1/feed/space', { host_mid: mid, offset, timezone_offset: -480, features: 'itemOpusStyle' });
+  const d = await getJSON<any>('/x/polymer/web-dynamic/v1/feed/space', { host_mid: mid, offset, timezone_offset: -480, features: FEATURES });
   return { list: (d.items ?? []).map(toDyn).filter(Boolean) as Dyn[], offset: d.offset ?? '', more: !!d.has_more };
 }
 
 export type FeedType = 'all' | 'video' | 'pgc' | 'article';
 /** 关注动态流；hostMid 只看某个 UP */
 export async function followFeed(type: FeedType, offset: string, hostMid = 0): Promise<{ list: Dyn[]; offset: string; more: boolean; baseline: string }> {
-  const p: Record<string, string | number> = { type, offset, timezone_offset: -480, features: 'itemOpusStyle' };
+  const p: Record<string, string | number> = { type, offset, timezone_offset: -480, features: FEATURES };
   if (hostMid) p.host_mid = hostMid;
   const d = await getJSON<any>('/x/polymer/web-dynamic/v1/feed/all', p);
   return { list: (d.items ?? []).map(toDyn).filter(Boolean) as Dyn[], offset: d.offset ?? '', more: !!d.has_more, baseline: d.update_baseline ?? '' };

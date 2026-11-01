@@ -29,6 +29,8 @@ jobs:
       - run: npm test
       - run: npm run pack
       - run: npx playwright install --with-deps chromium
+      - run: npm run test:appearance
+      - run: npm run test:moments
       - run: npm run test:comments
       - run: npm run test:hydration
       - run: npm run test:enhancements

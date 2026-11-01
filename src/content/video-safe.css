@@ -1,11 +1,32 @@
-/* 播放页兼容模式：原生播放器、推荐、评论保留 B 站布局与绘制方式。
- * 不隐藏通用上报类，不改视频层背景、尺寸、mask、isolation 或 overflow。
- */
+/* Native DOM, player layers and hydration remain untouched. Only named surfaces,
+ * text nodes and theme tokens outside the player are restyled. */
 #margin-watch-top{position:fixed;top:0;left:0;right:0;z-index:10000;height:72px}
 #margin-watch-top[hidden]{display:none!important}
 html.margin-watch #biliMainHeader,html.margin-watch .bili-header.fixed-header{display:none!important}
 html.margin-watch .video-container-v1{padding-top:96px!important}
-html.margin-watch{--m-ink:#17181a;--m-canvas:#f5f4f1;background:var(--m-canvas)}
-html.margin-watch[data-margin-theme="dark"]{--m-ink:#ededee;--m-canvas:#111112;color-scheme:dark}
-html.margin-watch body{background:var(--m-canvas);color:var(--m-ink)}
+html.margin-watch{
+ --m-ink:#202124;--m-canvas:#f5f4f1;--m-surface:#fff;--m-muted:#555b64;--m-faint:#626873;--m-chip:#e9e9e6;--m-line:#d8d9dc;
+ --m-accent:var(--bp-accent,#00aeec);--m-sans:"Segoe UI","PingFang SC","Microsoft YaHei","Noto Sans CJK SC",system-ui,sans-serif;
+ --bg1:var(--m-surface)!important;--bg2:var(--m-canvas)!important;--bg3:var(--m-chip)!important;
+ --bg1_float:var(--m-surface)!important;--bg2_float:var(--m-chip)!important;
+ --text1:var(--m-ink)!important;--text2:var(--m-muted)!important;--text3:var(--m-faint)!important;--text4:#90959e!important;
+ --text_link:var(--m-accent)!important;--text_hover:var(--m-ink)!important;--text_active:var(--m-ink)!important;
+ --line_light:var(--m-line)!important;--line_regular:var(--m-line)!important;--line_bold:var(--m-line)!important;--line_border:var(--m-line)!important;
+ --graph_white:var(--m-surface)!important;--graph_bg_thin:var(--m-canvas)!important;--graph_bg_regular:var(--m-chip)!important;--graph_bg_thick:var(--m-chip)!important;
+ --graph_weak:var(--m-line)!important;--graph_medium:var(--m-faint)!important;--graph_icon:var(--m-muted)!important;
+ --brand_blue:var(--m-accent)!important;--brand_blue_thin:#e0f2fa!important;
+ background:var(--m-canvas)!important;color-scheme:light;
+}
+html.margin-watch[data-margin-theme="dark"]{
+ --m-ink:#eceef2;--m-canvas:#141518;--m-surface:#1e2025;--m-muted:#bcc2cd;--m-faint:#a5adba;--m-chip:#292c33;--m-line:#3b4049;
+ --text4:#8b94a2!important;--brand_blue_thin:#153543!important;color-scheme:dark;
+}
+html.margin-watch body,html.margin-watch #app{background:var(--m-canvas)!important;color:var(--m-ink)}
+html.margin-watch :is(.video-info-container,.video-desc-container,.video-toolbar-container,.video-tag-container,.right-container,.up-panel-container,.up-info-container,.recommend-list-v1,.recommend-list-container,.comment-container,#commentapp){color:var(--m-ink)}
+html.margin-watch :is(.video-desc-container,.video-desc-container .basic-desc-info,.video-pod,.video-pod__header,.video-pod__body,.base-video-sections-v1,.video-sections-content-list,.danmaku-box,.bui-collapse-wrap,.bpx-player-sending-bar){background:var(--m-surface)!important;color:var(--m-ink)!important;border-color:var(--m-line)!important}
+html.margin-watch :is(.video-title,.recommend-list-v1 .title,.video-page-card-small .title,.up-info-container .up-name,.video-desc-container .desc-info-text,.video-pod .title-txt,.base-video-sections-v1 .title){color:var(--m-ink)!important}
+html.margin-watch :is(.video-info-detail,.video-info-detail-list,.pubdate-ip-text,.video-page-card-small .playinfo,.video-page-card-small .upname,.up-info-container .desc,.video-toolbar-container .video-toolbar-left-item){color:var(--m-muted)!important}
+html.margin-watch :is(.video-title,.video-info-detail,.video-info-detail-list,.video-desc-container,.video-page-card-small .info,.up-info-container,.video-pod,.video-toolbar-container){font-family:var(--m-sans)!important;-webkit-font-smoothing:auto;text-rendering:auto}
+html.margin-watch :is(.video-info-detail,.video-info-detail-list,.pubdate-ip-text,.video-page-card-small .playinfo,.video-page-card-small .upname){font-size:var(--bp-meta-size,14px)!important;font-weight:var(--bp-font-weight,500)!important;line-height:1.5!important;letter-spacing:normal!important}
+html.margin-watch .video-desc-container .desc-info-text{font-size:var(--bp-font-size,15px)!important;font-weight:var(--bp-font-weight,500)!important;line-height:var(--bp-line-height,1.7)!important}
 #margin-bg{position:fixed;inset:0;z-index:-1;pointer-events:none}

@@ -6,6 +6,7 @@
 import { loadSettings, onSettingsChange, type Settings } from '../shared/settings';
 import { startTracking } from './footprint/beat';
 import { injectFonts } from './fonts';
+import { publishAppearance } from './appearance';
 import { muteNative, setGuard, guardEnabled } from './native-guard';
 import type { SkinKind } from './ui/watch';
 import watchCss from './watch.css?inline';
@@ -144,7 +145,11 @@ async function start(): Promise<void> {
   injectFonts();
   trackKeyboard();
   const bypassTree = offByUrl() || !!sessionStorage.getItem('biliprism:off');
-  const publishCommentTree = (s: Settings) => { document.documentElement.dataset.biliprismCommentTree = String(s.enabled && s.commentTree && isWatch() && !bypassTree); };
+  const publishCommentTree = (s: Settings) => {
+    publishAppearance(s, s.enabled && !bypassTree);
+    document.documentElement.dataset.biliprismCommentTheme = String(s.enabled && s.watch && isWatch() && !bypassTree);
+    document.documentElement.dataset.biliprismCommentTree = String(s.enabled && s.commentTree && isWatch() && !bypassTree);
+  };
   onSettingsChange((next, prev) => { publishCommentTree(next); if (next.enabled !== prev.enabled) location.reload(); });
   void loadSettings().then(s => { publishCommentTree(s); if (s.enabled && !offByUrl()) startTracking(); });
   if (isWatch()) return startWatch();

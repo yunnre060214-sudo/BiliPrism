@@ -30,7 +30,45 @@ export interface PlayerSettings {
   subtitleExport: boolean;
 }
 
+export interface AppearanceSettings {
+  fontSize: number;
+  fontWeight: 400 | 500 | 600;
+  lineHeight: number;
+  accent: string;
+  radius: number;
+  reduceMotion: boolean;
+  solidSurfaces: boolean;
+}
+export interface CommentSettings {
+  indent: number;
+  lineWidth: number;
+  showGuides: boolean;
+  batchPages: number;
+}
+export interface MomentsSettings {
+  columns: 1 | 2;
+  showProfile: boolean;
+  showLive: boolean;
+  showHot: boolean;
+  showUpList: boolean;
+  tabsCentered: boolean;
+  compact: boolean;
+  autoLoad: boolean;
+  openInNewTab: boolean;
+  hideReposts: boolean;
+  hideVideo: boolean;
+  hideArticle: boolean;
+  hidePictures: boolean;
+  keywords: string[];
+  blockedUsers: string[];
+  wantedUsers: string[];
+  pinnedUsers: string[];
+}
+
 export interface Settings {
+  appearance: AppearanceSettings;
+  comments: CommentSettings;
+  moments: MomentsSettings;
   player: PlayerSettings;
   commentTree: boolean;
   enabled: boolean;
@@ -52,6 +90,9 @@ export interface Settings {
 }
 
 export const DEFAULTS: Settings = {
+  appearance: { fontSize: 15, fontWeight: 500, lineHeight: 1.7, accent: '#00aeec', radius: 16, reduceMotion: false, solidSurfaces: true },
+  comments: { indent: 32, lineWidth: 2, showGuides: true, batchPages: 5 },
+  moments: { columns: 2, showProfile: true, showLive: true, showHot: true, showUpList: true, tabsCentered: false, compact: false, autoLoad: true, openInNewTab: true, hideReposts: false, hideVideo: false, hideArticle: false, hidePictures: false, keywords: [], blockedUsers: [], wantedUsers: [], pinnedUsers: [] },
   commentTree: true,
   player: { wheelVolume: true, volumeStep: 5, rememberSpeed: true, speed: 1, wide: false, subtitleExport: true },
   enabled: true,
@@ -76,6 +117,9 @@ function merge(raw: Partial<Settings> | undefined): Settings {
     ...DEFAULTS,
     ...r,
     player: { ...DEFAULTS.player, ...(r.player ?? {}) },
+    appearance: { ...DEFAULTS.appearance, ...(r.appearance ?? {}) },
+    comments: { ...DEFAULTS.comments, ...(r.comments ?? {}) },
+    moments: { ...DEFAULTS.moments, ...(r.moments ?? {}) },
     filters: { ...DEFAULTS.filters, ...(r.filters ?? {}) },
     bg: { ...DEFAULTS.bg, ...(r.bg ?? {}) },
     palette: 'classic', // 旧版存过 mist，统一回到经典
@@ -135,6 +179,30 @@ export function sanitizeSettings(raw: unknown): Settings | null {
   for (const k of ['wheelVolume', 'rememberSpeed', 'wide', 'subtitleExport'] as const) if (typeof p[k] === 'boolean') out.player[k] = p[k];
   if (typeof p.volumeStep === 'number' && Number.isFinite(p.volumeStep)) out.player.volumeStep = Math.round(Math.max(1, Math.min(50, p.volumeStep)));
   if (typeof p.speed === 'number' && Number.isFinite(p.speed)) out.player.speed = Math.max(0.25, Math.min(5, p.speed));
+  const object = (v: unknown) => v && typeof v === 'object' && !Array.isArray(v) ? v as Record<string, unknown> : {};
+  const bounded = (v: unknown, fallback: number, min: number, max: number) => typeof v === 'number' && Number.isFinite(v) ? Math.max(min, Math.min(max, v)) : fallback;
+  const a = object(r.appearance);
+  out.appearance = { ...DEFAULTS.appearance,
+    fontSize: Math.round(bounded(a.fontSize, DEFAULTS.appearance.fontSize, 14, 20)),
+    fontWeight: [400, 500, 600].includes(Number(a.fontWeight)) && typeof a.fontWeight === 'number' ? a.fontWeight as 400 | 500 | 600 : DEFAULTS.appearance.fontWeight,
+    lineHeight: bounded(a.lineHeight, DEFAULTS.appearance.lineHeight, 1.5, 2),
+    radius: Math.round(bounded(a.radius, DEFAULTS.appearance.radius, 0, 24)),
+    accent: typeof a.accent === 'string' && /^#[0-9a-f]{6}$/i.test(a.accent) ? a.accent : DEFAULTS.appearance.accent,
+  };
+  for (const k of ['reduceMotion', 'solidSurfaces'] as const) if (typeof a[k] === 'boolean') out.appearance[k] = a[k];
+  const c = object(r.comments);
+  out.comments = { ...DEFAULTS.comments,
+    indent: Math.round(bounded(c.indent, DEFAULTS.comments.indent, 16, 48)),
+    lineWidth: bounded(c.lineWidth, DEFAULTS.comments.lineWidth, 1, 3),
+    batchPages: Math.round(bounded(c.batchPages, DEFAULTS.comments.batchPages, 1, 10)),
+  };
+  if (typeof c.showGuides === 'boolean') out.comments.showGuides = c.showGuides;
+  const m = object(r.moments);
+  out.moments = { ...DEFAULTS.moments };
+  if (m.columns === 1 || m.columns === 2) out.moments.columns = m.columns;
+  for (const k of ['showProfile', 'showLive', 'showHot', 'showUpList', 'tabsCentered', 'compact', 'autoLoad', 'openInNewTab', 'hideReposts', 'hideVideo', 'hideArticle', 'hidePictures'] as const)
+    if (typeof m[k] === 'boolean') out.moments[k] = m[k];
+  for (const k of ['keywords', 'blockedUsers', 'wantedUsers', 'pinnedUsers'] as const) out.moments[k] = strs(m[k]) ?? DEFAULTS.moments[k];
   return merge(out);
 }
 

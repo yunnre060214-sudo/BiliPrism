@@ -47,6 +47,12 @@ try{
   await page.locator('#native-reply-11').getByRole('button',{name:'回复',exact:true}).click();
   assert.equal(await page.locator('#native-reply-11').getAttribute('data-native-clicked'),'true');
   results.push({name:'分支键盘折叠与原生回复操作',ok:true});console.log('PASS 分支折叠只影响子回复，原生回复按钮仍可用');
+  await replies.getByRole('button',{name:'收起楼层',exact:true}).click();
+  assert.equal(await page.locator('#native-reply-11').isVisible(),false);
+  await replies.getByRole('button',{name:'全部展开楼层',exact:true}).click();
+  await page.waitForTimeout(100);
+  assert.equal(await page.locator('#native-reply-14').isVisible(),true);
+  console.log('PASS 全部展开及一键收起已加载楼层');
   // 评论页更换节点集合，继续利用已知 parent 链回溯当前可见祖先。
   await page.evaluate(()=>{document.getElementById('commentapp').style.marginTop='0';window.nativeReplies.filter(n=>n.id==='native-reply-12'||n.id==='native-reply-13').forEach(n=>n.remove());});
   await page.waitForFunction(()=>window.nativeReplies[1].dataset.bpReplyDepth==='1');
@@ -61,6 +67,36 @@ try{
   assert.equal(await replies.locator('.bp-tree-guides').count(),0);
   await sw.evaluate(async()=>{const key='biliprism:settings';const s=(await chrome.storage.local.get(key))[key]||{};await chrome.storage.local.set({[key]:{...s,commentTree:true}});});
   await page.waitForFunction(()=>window.nativeReplies[1].dataset.bpReplyDepth==='0'); // 关闭后缓存清空，当前缺失父节点不再猜测。
+  // Native reactive .list and pagination methods, including an in-flight request
+  // and a failed page. The extension must use these methods and retain loaded data.
+  await page.evaluate(()=>{
+    const c=window.nativeReplyContainer,r=c.getRootNode().host;
+    const initial=[...c.children].filter(n=>n.data).map(n=>n.data);
+    initial.find(d=>d.rpid_str==='14').like=9;initial.find(d=>d.rpid_str==='14').action=1;
+    const make=(id,parent,name)=>({rpid_str:id,parent_str:parent,root_str:'10',ctime:Number(id),member:{uname:name},content:{message:'分页回复 '+name},like:0,action:0});
+    const pages=[initial,[make('12','11','B'),{...initial.find(d=>d.rpid_str==='14'),like:0,action:0},make('15','10','E')],[make('16','15','F')]];
+    let list=initial,concurrent=0;r.maxConcurrent=0;r.calls=[];r.failPage3=true;
+    const render=value=>{const old=new Map([...c.children].filter(n=>n.data).map(n=>[n.data.rpid_str,n]));[...c.children].filter(n=>n.data).forEach(n=>n.remove());for(const d of value){const n=old.get(d.rpid_str)||document.createElement('bili-comment-reply-renderer');n.id='native-reply-'+d.rpid_str;n.data=d;c.insertBefore(n,c.querySelector('#expander-footer'));}};
+    Object.defineProperty(r,'list',{configurable:true,get:()=>list,set:value=>{list=value;render(value);}});
+    r.currentPage=1;r.totalPage=3;r.pageSize=2;r.count=6;r.showPagination=true;r.showSpinner=false;
+    r.handleChangePage=async({idx})=>{r.calls.push(idx+1);concurrent++;r.maxConcurrent=Math.max(concurrent,r.maxConcurrent);r.showSpinner=true;try{await new Promise(resolve=>setTimeout(resolve,80));if(idx===2&&r.failPage3){r.failPage3=false;throw new Error('模拟原生分页失败');}r.currentPage=idx+1;r.list=pages[idx];}finally{concurrent--;r.showSpinner=false;}};
+    window.paginationRenderer=r;
+  });
+  await sw.evaluate(async()=>{const key='biliprism:settings',s=(await chrome.storage.local.get(key))[key]||{};await chrome.storage.local.set({[key]:{...s,comments:{...s.comments,batchPages:1}}});});
+  await page.waitForTimeout(1000);
+  await replies.getByRole('button',{name:/全部展开楼层|继续展开剩余楼层/}).click();
+  await page.waitForFunction(()=>window.paginationRenderer.list.length===4);
+  assert.equal(await page.evaluate(()=>window.paginationRenderer.list.find(d=>d.rpid_str==='14').like),9);
+  assert.equal(await page.locator('#native-reply-14').getAttribute('data-bp-reply-depth'),'2');
+  await replies.getByRole('button',{name:'继续展开剩余楼层',exact:true}).click();
+  await replies.getByRole('status').filter({hasText:'模拟原生分页失败'}).waitFor();
+  assert.equal(await page.evaluate(()=>window.paginationRenderer.list.length),4);
+  await replies.getByRole('button',{name:'继续展开剩余楼层',exact:true}).click();
+  await page.waitForFunction(()=>window.paginationRenderer.list.length===5);
+  await page.waitForFunction(()=>document.querySelector('bili-comments').shadowRoot.querySelector('bili-comment-thread-renderer').shadowRoot.querySelector('bili-comment-replies-renderer').shadowRoot.querySelector('#native-reply-16').dataset.bpReplyDepth==='1');
+  assert.deepEqual(await page.evaluate(()=>window.paginationRenderer.calls),[2,3,3]);
+  assert.equal(await page.evaluate(()=>window.paginationRenderer.maxConcurrent),1);
+  console.log('PASS 原生批量分页、跨页合树、去重、点赞保留、失败重试');
   assert.deepEqual(errors,[]);
   results.push({name:'设置关闭恢复原生布局，重新开启不猜测未知父关系',ok:true});console.log('PASS 树状设置开关与分页回退');
   writeFileSync('tests/artifacts/comments-results.json',JSON.stringify(results,null,2));

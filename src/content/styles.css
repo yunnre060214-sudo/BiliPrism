@@ -1520,3 +1520,25 @@ canvas.gf-sheet-art[data-ready] { opacity: 1; filter: none; }
 .home .bar > .eyebrow { font: 500 12px/1.4 var(--sans); letter-spacing: 0; }
 .wx-live { font: 500 12px/1.4 var(--sans); letter-spacing: 0; }
 .wx-clock { font-family: inherit; font-variant-numeric: tabular-nums; }
+
+/* Clear system typography. Avoid generic monospace Chinese fallback and thin
+ * bitmap-like strokes in labels. No text strokes, shadows or scaled text. */
+.app {
+ --sans:"Segoe UI","PingFang SC","Microsoft YaHei","Noto Sans CJK SC",system-ui,sans-serif;
+ --mono:var(--sans);--serif:var(--sans);--display:var(--sans);
+ --accent:var(--bp-accent,#00aeec);
+ font-size:var(--bp-font-size,15px);font-weight:var(--bp-font-weight,500);line-height:var(--bp-line-height,1.7);
+ -webkit-font-smoothing:auto;text-rendering:auto;
+}
+.app[data-theme="dark"]{--accent-text:color-mix(in srgb,var(--accent) 65%,white)}
+.app[data-theme="light"],.app:not([data-theme]){--accent-text:color-mix(in srgb,var(--accent) 65%,#17181a)}
+:is(.dy-eyebrow,.dy-stat,.dy-vmeta,.hi-meta,.hi-type,.hi-progress,.hist-meta,.meta,.eyebrow,.fd-up-name,.fd-card-h b,.wx-live,.fp-months,.fp-days,.foot,.dur,.row-label small){font-family:var(--sans);font-size:var(--bp-meta-size,14px);font-weight:var(--bp-font-weight,500);line-height:1.5;letter-spacing:normal;-webkit-font-smoothing:auto}
+:is(.hs-no,.wx-temp,.wx-hours b){font-family:var(--sans);-webkit-font-smoothing:auto}
+:is(.dy-text,.desc){font-size:var(--bp-font-size,15px);font-weight:var(--bp-font-weight,500);line-height:var(--bp-line-height,1.7)}
+:is(.card,.fd-card,.dy.with-by,.sheet){border-radius:var(--bp-radius,16px)}
+:host-context([data-biliprism-solid="true"]) :is(.top,.search,.fd-card,.sheet,.cp,.dy.with-by){background:var(--surface)!important;backdrop-filter:none!important}
+:host-context([data-biliprism-motion="reduce"]) *, :host-context([data-biliprism-motion="reduce"]) *::before, :host-context([data-biliprism-motion="reduce"]) *::after{animation:none!important;transition:none!important;scroll-behavior:auto!important}
+.settings-search{width:100%;padding:12px;border:1px solid var(--line);border-radius:12px;background:var(--chip);color:var(--ink);font:inherit;margin-bottom:16px}
+.group[hidden],.row[hidden],.block[hidden]{display:none!important}
+
+.fp-months{font-size:14px;line-height:16px}

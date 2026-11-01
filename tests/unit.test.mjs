@@ -86,3 +86,31 @@ test('BewlyCat 连线几何生成圆弧且不越过头像', () => {
   const path = m.getCommentReplyBranchPath({ key:'a',parentAnchor:parent,childAnchors:[child],collapsed:false,collapseParentBody:false,parentAuthorName:'A' },12,8);
   assert.match(path,/A 12 12/);assert.match(path,/H 32/);
 });
+
+test('旧设置补齐外观和动态配置；非法 CSS 与异常数值不可注入', () => {
+  const old=m.sanitizeSettings({theme:'dark'});
+  assert.equal(old.appearance.fontSize,15);assert.equal(old.moments.columns,2);assert.equal(old.comments.batchPages,5);
+  const s=m.sanitizeSettings({appearance:{fontSize:2,fontWeight:100,lineHeight:9,accent:'red;display:none',radius:Infinity},comments:{indent:400,batchPages:-1,lineWidth:0},moments:{columns:12,keywords:['xx',null],showHot:false}});
+  assert.deepEqual([s.appearance.fontSize,s.appearance.fontWeight,s.appearance.lineHeight,s.appearance.accent],[14,500,2,'#00aeec']);
+  assert.deepEqual([s.comments.indent,s.comments.batchPages,s.comments.lineWidth],[48,1,1]);
+  assert.equal(s.moments.columns,2);assert.equal(s.moments.showHot,false);assert.deepEqual(s.moments.keywords,['xx']);
+});
+test('动态过滤覆盖转发原文、UP 主、特别关注及类型；置顶优先于更新', () => {
+  const d={id:'1',type:'DYNAMIC_TYPE_AV',mid:8,author:'作者',text:'Hello',pics:[],video:{title:'Video'},stat:{}};
+  const s=m.DEFAULTS.moments;
+  assert.equal(m.allowMoment(d,s),true);
+  assert.equal(m.allowMoment(d,{...s,hideVideo:true}),false);
+  assert.equal(m.allowMoment({...d,orig:{...d,mid:9,author:'原作者',text:'AD'}},{...s,keywords:['ad']}),false);
+  assert.equal(m.allowMoment({...d,orig:{...d,mid:9,author:'原作者'}},{...s,blockedUsers:['9']}),false);
+  assert.equal(m.allowMoment(d,{...s,wantedUsers:['作者']},true),true);
+  assert.equal(m.allowMoment(d,s,true),false);
+  assert.deepEqual(m.sortUps([{mid:1,name:'A',fresh:true},{mid:2,name:'B',fresh:false}],['2']).map(u=>u.mid),[2,1]);
+});
+test('批量展开多页按 rpid 字符串去重，后取得的原生数据优先', () => {
+  const a={rpid_str:'123456789012345678',like:1},b={rpid_str:'123456789012345679',like:2};
+  assert.deepEqual(m.mergeReplies([[a,b],[{...a,like:3}]]).map(d=>d.like),[3,2]);
+});
+test('动态映射保留番剧附件和富文本，拒绝非网页跳转', () => {
+  const d=m.toDyn({id_str:'12',type:'DYNAMIC_TYPE_PGC',modules:{module_dynamic:{desc:{text:'番剧推荐 @作者',rich_text_nodes:[{text:'番剧推荐',jump_url:'javascript:alert(1)'},{type:'RICH_TEXT_NODE_TYPE_AT',text:'@作者',rid:8}]},major:{pgc:{title:'番剧',cover:'//i0.hdslb.com/test.jpg',jump_url:'//www.bilibili.com/bangumi/play/ep12'}}}}});
+  assert.equal(d.attachment.kind,'PGC');assert.match(d.attachment.url,/^https:\/\//);assert.equal(d.segments[0].url,'');assert.equal(d.segments[1].url,'https://space.bilibili.com/8');
+});
