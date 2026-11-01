@@ -70,3 +70,19 @@ test('字幕列表使用当前分 P 的 CID，空字幕有明确错误', async (
   globalThis.fetch = async url => String(url).includes('/x/player/') ? { ok: true, async json() { return { code: 0, data: { subtitle: { subtitles: [] } } }; } } : originalFetch(url);
   await assert.rejects(m.listSubtitles('https://www.bilibili.com/video/BVtest123'), /暂无可导出字幕/);
 });
+
+test('评论树按父子与时间排序，跨页回溯已知祖先，循环关系不丢节点', () => {
+  const item = (id, parent, time) => ({ item: id, meta: { id, parent, root: '10', time } });
+  const nodes = [item('12','11',3), item('14','12',5), item('11','10',1), item('13','10',2)];
+  assert.deepEqual(m.orderReplies(nodes).map(n => [n.item,n.depth]), [['11',0],['12',1],['14',2],['13',0]]);
+  const cache = new Map(nodes.map(n => [n.meta.id,n.meta]));
+  assert.deepEqual(m.orderReplies([nodes[1],nodes[2]],cache).map(n => [n.item,n.depth]), [['11',0],['14',1]]);
+  assert.equal(m.orderReplies([item('1','2',1),item('2','1',2)]).length,2);
+  assert.equal(m.orderReplies([item('1','1',1)]).length,1);
+});
+test('BewlyCat 连线几何生成圆弧且不越过头像', () => {
+  const parent = { centerX:12,centerY:12,bottom:24,left:0,toggleY:30 };
+  const child = { centerX:44,centerY:70,bottom:82,left:32,toggleY:90 };
+  const path = m.getCommentReplyBranchPath({ key:'a',parentAnchor:parent,childAnchors:[child],collapsed:false,collapseParentBody:false,parentAuthorName:'A' },12,8);
+  assert.match(path,/A 12 12/);assert.match(path,/H 32/);
+});

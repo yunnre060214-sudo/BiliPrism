@@ -32,6 +32,7 @@ export interface PlayerSettings {
 
 export interface Settings {
   player: PlayerSettings;
+  commentTree: boolean;
   enabled: boolean;
   theme: Theme;
   palette: Palette;
@@ -51,6 +52,7 @@ export interface Settings {
 }
 
 export const DEFAULTS: Settings = {
+  commentTree: true,
   player: { wheelVolume: true, volumeStep: 5, rememberSpeed: true, speed: 1, wide: false, subtitleExport: true },
   enabled: true,
   theme: 'auto',
@@ -110,8 +112,8 @@ export function sanitizeSettings(raw: unknown): Settings | null {
   if (!raw || typeof raw !== 'object' || Array.isArray(raw)) return null;
   const r = raw as Record<string, unknown>;
   const out: Partial<Settings> = {};
-  const bool = (k: 'enabled' | 'hoverPreview' | 'watch' | 'intro' | 'footprint' | 'weather' | 'favDirect') => { if (typeof r[k] === 'boolean') out[k] = r[k] as boolean; };
-  bool('enabled'); bool('hoverPreview'); bool('watch'); bool('intro'); bool('footprint'); bool('weather'); bool('favDirect');
+  const bool = (k: 'commentTree' | 'enabled' | 'hoverPreview' | 'watch' | 'intro' | 'footprint' | 'weather' | 'favDirect') => { if (typeof r[k] === 'boolean') out[k] = r[k] as boolean; };
+  bool('commentTree'); bool('enabled'); bool('hoverPreview'); bool('watch'); bool('intro'); bool('footprint'); bool('weather'); bool('favDirect');
   if (r.theme === 'auto' || r.theme === 'light' || r.theme === 'dark') out.theme = r.theme;
   const strs = (v: unknown) => (Array.isArray(v) ? v.filter((x): x is string => typeof x === 'string' && x.length <= 200).slice(0, 500) : undefined);
   const num = (v: unknown, max: number) => (typeof v === 'number' && Number.isFinite(v) && v >= 0 && v <= max ? v : undefined);

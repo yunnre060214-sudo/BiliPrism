@@ -10,16 +10,14 @@ import { attachPreview } from './preview';
 import { createSettingsPanel, type SettingsPanel } from './settings-panel';
 import type { Sheet } from './sheet';
 import { attachGlass, filtersIn } from './liquid-glass';
-import { createFloatingMenu } from './floating-menu';
 import { createCommandPalette, type Command } from './command-palette';
 import { createContextMenu } from './context-menu';
 import { bindCardMenu } from './card-menu';
 import { createLaterDrawer } from './drawer';
 import { createScrollRuler } from './scroll-ruler';
-import { skinComments } from './comment-skin';
+import { openSubtitleExport } from '../enhancements/subtitle-dialog';
 import css from '../styles.css?inline';
 import { BackgroundLayer } from '../bg/background';
-import { startTriple } from './triple';
 
 export type SkinKind = 'watch' | 'search' | 'page';
 
@@ -64,6 +62,7 @@ export class WatchSkin {
     const clickSel = (sel: string) => (document.querySelector(sel) as HTMLElement | null)?.click();
     const later = createLaterDrawer(() => this.app);
     const watchCmds: Command[] = isWatch ? [
+      { id: 'w-subtitle', title: '导出字幕', cat: '操作', icon: ICONS.later, keys: ['字幕', 'srt', 'txt'], run: () => openSubtitleExport() },
       { id: 'w-top', title: '回到顶部', cat: '操作', icon: ICONS.top, run: () => scrollTo({ top: 0, behavior: 'smooth' }) },
       { id: 'w-comments', title: '看评论', cat: '跳转', icon: ICONS.message, keys: ['评论'], run: () => document.querySelector('#commentapp, bili-comments, .comment-container')?.scrollIntoView({ behavior: 'smooth', block: 'start' }) },
       { id: 'w-web', title: '网页全屏', cat: '操作', icon: ICONS.image, keys: ['全屏'], run: () => clickSel('.bpx-player-ctrl-web') },
@@ -94,15 +93,7 @@ export class WatchSkin {
         { title: '原版', icon: ICONS.exit, run: () => { sessionStorage.setItem('biliprism:off', '1'); location.reload(); } },
       ],
     });
-    const click = (sel: string) => (document.querySelector(sel) as HTMLElement | null)?.click();
-    const quick = isWatch ? createFloatingMenu([
-      { label: '回到顶部', en: 'Back to Top', run: () => scrollTo({ top: 0, behavior: 'smooth' }) },
-      { label: '看评论', en: 'Comments', run: () => document.querySelector('#commentapp, bili-comments, .comment-container')?.scrollIntoView({ behavior: 'smooth', block: 'start' }) },
-      { label: '网页全屏', en: 'Web Fullscreen', run: () => click('.bpx-player-ctrl-web') },
-      { label: '宽屏模式', en: 'Wide Mode', run: () => click('.bpx-player-ctrl-wide') },
-      { label: '收藏夹', en: 'Favorites', run: () => this.fav.open() },
-    ]) : null;
-    this.app = h('div', { class: 'app wt', 'data-bg': 'off' }, this.head.el, quick?.el ?? null, createScrollRuler(), this.panel.sheet.el, this.fav.el, palette.el, later.el, cm.el);
+    this.app = h('div', { class: 'app wt', 'data-bg': 'off' }, this.head.el, createScrollRuler(), this.panel.sheet.el, this.fav.el, palette.el, later.el, cm.el);
     root.append(this.app);
     // 播放页保留原生评论样式，避免穿透组件内部结构。
     const lg = filtersIn(root);

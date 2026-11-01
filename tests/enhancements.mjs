@@ -34,19 +34,26 @@ try {
     await chrome.storage.local.set({ [key]: { ...raw, player: { ...raw.player, ...patch } } });
   }, patch);
   const media = () => page.locator('#bilibili-player video');
-  const tools = () => page.locator('#biliprism-player-tools');
+  const openExport = async () => {
+    await page.keyboard.press('Control+k');
+    await page.getByRole('option', { name: /导出字幕/ }).click();
+    await page.getByRole('dialog', { name: '导出字幕', exact: true }).waitFor();
+    await page.getByRole('button', { name: '下载字幕' }).waitFor();
+  };
+  const exportDialog = () => page.getByRole('dialog', { name: '导出字幕', exact: true });
   const open = async (suffix = '') => {
     await page.goto('https://www.bilibili.com/video/BV1mdxN68E7F/' + suffix);
     await page.evaluate(() => {
       const v = document.createElement('video'); v.volume = .5;
       document.getElementById('bilibili-player').append(v);
     });
-    await tools().waitFor();
+    await page.waitForFunction(() => !!document.getElementById('biliprism-player-css'));
+    await page.waitForTimeout(250);
   };
   await open();
-  await check('扩展真实加载、工具条唯一、没有光学位移滤镜和 GPU 背景', async () => {
-    assert.equal(await tools().count(), 1);
-    assert.equal(await tools().evaluate(el => el.parentElement === document.documentElement && !document.getElementById('app').contains(el)), true, '增强工具条必须位于原生应用树之外');
+  await check('扩展真实加载、两个浮动控件均移除、没有光学位移滤镜和 GPU 背景', async () => {
+    assert.equal(await page.locator('#biliprism-player-tools').count(), 0);
+    assert.equal(await page.locator('.fm').count(), 0);
     assert.equal(await media().evaluate(el => {
       for (let n = el.parentElement; n; n = n.parentElement) if (getComputedStyle(n).display === 'none') return false;
       return document.getElementById('bilibili-player').getBoundingClientRect().height > 200;
@@ -59,7 +66,7 @@ try {
     assert.equal(prevented, false); assert.equal(await media().evaluate(el => el.volume), .5);
   });
   await check('播放速度持久化并在新页面生效', async () => {
-    await tools().getByLabel('播放速度').selectOption('1.5');
+    await media().evaluate(v => { v.playbackRate = 1.5; });
     await page.waitForFunction(() => document.querySelector('video').playbackRate === 1.5);
     for (let i = 0; i < 30; i++) {
       if (await sw.evaluate(async () => (await chrome.storage.local.get('biliprism:settings'))['biliprism:settings']?.player.speed === 1.5)) break;
@@ -77,24 +84,26 @@ try {
     await page.waitForFunction(() => document.querySelector('video').playbackRate === 1.5);
   });
   await check('宽屏实时开关与持久化', async () => {
-    await tools().getByRole('button', { name: '宽屏', exact: true }).click();
+    await updatePlayer({ wide: true });
     await page.waitForFunction(() => document.documentElement.classList.contains('biliprism-wide'));
-    await tools().getByRole('button', { name: '宽屏', exact: true }).click();
+    await updatePlayer({ wide: false });
     await page.waitForFunction(() => !document.documentElement.classList.contains('biliprism-wide'));
   });
   await check('分 P 字幕导出 SRT、语言选择和 JSON', async () => {
+    await openExport();
     const dl = page.waitForEvent('download');
-    await tools().getByRole('button', { name: '导出字幕', exact: true }).click();
+    await exportDialog().getByRole('button', { name: '下载字幕' }).click();
     const file = await dl;
     const body = readFileSync(await file.path(), 'utf8');
     assert.match(body, /00:00:00,000 --> 00:00:01,125/); assert.match(body, /你好，映棱/);
     assert.equal(cids.at(-1), '22');
-    await tools().getByLabel('字幕语言').selectOption('1');
-    await tools().getByLabel('字幕格式').selectOption('json');
+    await exportDialog().getByLabel('字幕语言').selectOption('1');
+    await exportDialog().getByLabel('字幕格式').selectOption('json');
     const dl2 = page.waitForEvent('download');
-    await tools().getByRole('button', { name: '导出字幕', exact: true }).click();
+    await exportDialog().getByRole('button', { name: '下载字幕' }).click();
     const file2 = await dl2;
     assert.equal(JSON.parse(readFileSync(await file2.path(), 'utf8').replace(/^\uFEFF/, '')).body[0].content, 'Hello');
+    await exportDialog().getByRole('button', { name: '关闭' }).click();
   });
   await check('全屏滚轮调音与菜单滚动排除', async () => {
     await page.evaluate(async () => {
@@ -119,8 +128,10 @@ try {
   });
   await check('关闭速度记忆、字幕模块及扩展总开关', async () => {
     await updatePlayer({ rememberSpeed: false, subtitleExport: false });
-    await tools().getByRole('button', { name: '导出字幕', exact: true }).waitFor({ state: 'hidden' });
-    await tools().getByLabel('播放速度').selectOption('2');
+    await openExport();
+    assert.equal(await exportDialog().getByRole('button', { name: '下载字幕' }).isDisabled(), true);
+    await exportDialog().getByRole('button', { name: '关闭' }).click();
+    await media().evaluate(v => { v.playbackRate = 2; });
     await page.waitForTimeout(300);
     const saved = await sw.evaluate(async () => (await chrome.storage.local.get('biliprism:settings'))['biliprism:settings']);
     assert.equal(saved.player.speed, 1.5);

@@ -143,8 +143,10 @@ function trackKeyboard(): void {
 async function start(): Promise<void> {
   injectFonts();
   trackKeyboard();
-  onSettingsChange((next, prev) => { if (next.enabled !== prev.enabled) location.reload(); });
-  void loadSettings().then(s => { if (s.enabled && !offByUrl()) startTracking(); });
+  const bypassTree = offByUrl() || !!sessionStorage.getItem('biliprism:off');
+  const publishCommentTree = (s: Settings) => { document.documentElement.dataset.biliprismCommentTree = String(s.enabled && s.commentTree && isWatch() && !bypassTree); };
+  onSettingsChange((next, prev) => { publishCommentTree(next); if (next.enabled !== prev.enabled) location.reload(); });
+  void loadSettings().then(s => { publishCommentTree(s); if (s.enabled && !offByUrl()) startTracking(); });
   if (isWatch()) return startWatch();
   const sm = spaceMatch();
   // 空间页的投稿接口依赖原版脚本写的指纹 cookie，不拦会 412

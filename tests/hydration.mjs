@@ -34,8 +34,8 @@ try {
     page.on('pageerror', e => errors.push(e.message));
     page.on('console', e => { if (e.type() === 'warn' || e.type() === 'error') warnings.push(e.text()); });
     await page.goto('https://www.bilibili.com/video/BVhydrate123/', { waitUntil: 'domcontentloaded' });
-    await page.locator('#biliprism-player-tools').waitFor();
-    assert.equal(await page.locator('#biliprism-player-tools').evaluate(el => el.parentElement === document.documentElement), true);
+    await page.waitForFunction(() => !!document.getElementById('biliprism-player-css'));
+    assert.equal(await page.locator('#biliprism-player-tools').count(), 0);
     await page.evaluate(legacy => {
       window.beforeHydration = { app: document.getElementById('app'), video: document.getElementById('native-video') };
       if (legacy) {

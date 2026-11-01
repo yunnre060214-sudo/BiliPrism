@@ -23,6 +23,8 @@ BiliPrism 修改了品牌、存储命名空间、构建与发布流程，替换�
 
 `src/content/enhancements/values.ts` adapts the normalization helpers from `src/utils/wheelVolume.ts` and `src/utils/playbackRate.ts`. `src/content/pages/enhancements.ts` adapts wheel accumulation, scrollable-area handling and fullscreen-only listener scheduling from `src/contentScripts/fullscreenWheelVolume.ts`, replacing Vue state with the BiliPrism lifecycle. The upstream restrictions against non-browser-client distribution remain applicable to these derived portions. This release is a browser extension.
 
+`src/content/comments/geometry.ts` preserves the shared SVG branch geometry from `src/utils/commentReplyTree.ts`. The comment data access, parent-first traversal, time ordering, indentation and branch controls in `src/content/comments/{tree,main}.ts` adapt the native comment-tree approach in `src/inject/index.ts`. BiliPrism uses CSS order without moving native reply nodes or Lit repeat markers, and reads public custom-element data in the MAIN world without network interception. Missing off-page parents retain the native reply prefix; unknown relationships are not guessed.
+
 ## qrcode-generator
 
 Copyright (c) 2009 Kazuhiko Arase. MIT license, included in `licenses/qrcode-generator-MIT.txt`. Used for account sign-in QR codes inherited from MARGIN. Build-only dependencies retain their package licenses.

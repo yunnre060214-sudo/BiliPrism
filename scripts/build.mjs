@@ -2,10 +2,10 @@ import { build } from 'vite';
 import { cp, mkdir, rm, readFile, writeFile } from 'node:fs/promises';
 await rm('dist', { recursive: true, force: true });
 await mkdir('dist', { recursive: true });
-for (const [name, entry] of Object.entries({ content: 'src/content/main.ts', popup: 'src/popup/popup.ts', background: 'src/background/sw.ts' })) {
+for (const [name, entry] of Object.entries({ 'comments-main': 'src/content/comments/main.ts', content: 'src/content/main.ts', popup: 'src/popup/popup.ts', background: 'src/background/sw.ts' })) {
   await build({ configFile: false, publicDir: false, logLevel: 'warn', build: {
     outDir: 'dist', emptyOutDir: false, target: 'chrome110', minify: true,
-    lib: { entry, name: `biliprism_${name}`, formats: ['iife'], fileName: () => `${name}.js` },
+    lib: { entry, name: `biliprism_${name.replaceAll("-", "_")}`, formats: ['iife'], fileName: () => `${name}.js` },
   } });
 }
 await build({ configFile: false, publicDir: false, logLevel: 'warn', build: {

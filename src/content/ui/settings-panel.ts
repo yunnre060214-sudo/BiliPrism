@@ -14,6 +14,7 @@ export function createSettingsPanel(get: () => Settings, currentShader: () => Sh
   const save = (patch: Partial<Settings>) => saveSettings(patch);
   const s0 = get();
 
+  const commentTree = toggle(s0.commentTree, '树状评论楼层', v => save({ commentTree: v }));
   const theme = segmented<Theme>([['auto', '跟随系统'], ['light', '亮色'], ['dark', '暗色']], s0.theme, (v) => save({ theme: v }));
   const watch = toggle(s0.watch, '其他页面重设计', (v) => save({ watch: v }));
   const preview = toggle(s0.hoverPreview, '悬停预览', (v) => save({ hoverPreview: v }));
@@ -120,7 +121,8 @@ export function createSettingsPanel(get: () => Settings, currentShader: () => Sh
       block('音量步长', null, step),
       row('记忆播放速度', '沿用你在播放器选择的速度', speed),
       row('宽屏布局', '扩大视频区域并把推荐列表放到下方', wide),
-      row('字幕导出', '播放页工具条，支持 SRT / TXT / JSON', subtitle)),
+      row('字幕导出', 'Ctrl / ⌘ + K 打开命令面板，选择「导出字幕」', subtitle)),
+    h('section', { class: 'group' }, h('h3', {}, '评论区'), row('树状评论楼层', 'BewlyCat 树状层级、连线与分支折叠；保留原生回复与翻页', commentTree)),
     h('section', { class: 'group' }, h('h3', {}, '推荐过滤'),
       block('屏蔽关键词', '标题包含即隐藏', kw),
       block('屏蔽 UP 主', '卡片右上角也能一键屏蔽', ups),
@@ -135,6 +137,7 @@ export function createSettingsPanel(get: () => Settings, currentShader: () => Sh
     sheet,
     sync(s) {
       theme.set(s.theme);
+      commentTree.setAttribute('aria-checked', String(s.commentTree));
       wheel.setAttribute('aria-checked', String(s.player.wheelVolume));
       speed.setAttribute('aria-checked', String(s.player.rememberSpeed));
       wide.setAttribute('aria-checked', String(s.player.wide));
