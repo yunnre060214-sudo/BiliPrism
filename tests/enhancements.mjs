@@ -92,10 +92,14 @@ try {
     assert.equal(JSON.parse(readFileSync(await file2.path(), 'utf8').replace(/^\uFEFF/, '')).body[0].content, 'Hello');
   });
   await check('全屏滚轮调音与菜单滚动排除', async () => {
-    await page.evaluate(async () => { await document.getElementById('bilibili-player').requestFullscreen(); });
+    await page.evaluate(async () => {
+      const changed = new Promise(resolve => document.addEventListener('fullscreenchange', resolve, { once: true }));
+      await document.getElementById('bilibili-player').requestFullscreen();
+      await changed;
+    });
     await page.waitForFunction(() => !!document.fullscreenElement, null, { timeout: 5000 });
     await media().dispatchEvent('wheel', { deltaY: -120, bubbles: true, cancelable: true });
-    assert.ok(Math.abs(await media().evaluate(el => el.volume) - .55) < .001);
+    assert.equal(Math.round(await media().evaluate(el => el.volume) * 100), 55, '全屏滚轮应该把音量从 50% 增加到 55%');
     const scrolled = await page.evaluate(() => {
       const menu = document.createElement('div'); menu.style.cssText = 'height:50px;overflow-y:auto'; menu.innerHTML = '<div style="height:500px">list</div>';
       document.fullscreenElement.append(menu);
