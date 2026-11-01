@@ -60,6 +60,7 @@ const PAGES = [
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 const results = [];
 let failed = 0;
+let footprintFont = null;
 
 for (const theme of THEMES) {
   const dir = mkdtempSync(join(tmpdir(), 'margin-smoke-'));
@@ -77,6 +78,10 @@ for (const theme of THEMES) {
   let sw = ctx.serviceWorkers()[0];
   if (!sw) sw = await ctx.waitForEvent('serviceworker', { timeout: 10_000 }).catch(() => null);
 
+  if (sw) await sw.evaluate(async () => {
+    const key = 'biliprism:settings', s = (await chrome.storage.local.get(key))[key] || {};
+    await chrome.storage.local.set({ [key]: { ...s, weather: true } });
+  });
   const page = ctx.pages()[0] ?? await ctx.newPage();
   const cdp = await ctx.newCDPSession(page);
   await cdp.send('Runtime.enable');
@@ -100,6 +105,28 @@ for (const theme of THEMES) {
         await sleep(250);
       }
       await sleep(2500);
+      if (name === 'home' && !miss.length) {
+        for (const width of [1024, 2048, 1440]) {
+          await page.setViewportSize({ width, height: 900 });
+          await sleep(250);
+          const ui = await page.evaluate(() => {
+            const r = document.getElementById('margin-root').shadowRoot;
+            const appFont = getComputedStyle(r.querySelector('.app')).fontFamily;
+            const head = getComputedStyle(r.querySelector('.fp-head'));
+            const graph = r.querySelector('.fp-graph'), cell = r.querySelector('.fp-cells .fp-cell').getBoundingClientRect();
+            return { font: [head.fontFamily, head.fontSize, head.fontWeight, head.lineHeight].join('|'),
+              removed: !!r.querySelector('.fp-foot, .fp-legend, .bar .no, .fp-top .eyebrow > span:nth-child(2)'),
+              square: Math.abs(cell.width - cell.height) < .15,
+              fits: graph.scrollWidth <= graph.clientWidth + 2,
+              dates: getComputedStyle(r.querySelector('.bar > .eyebrow')).fontFamily === appFont,
+              clock: getComputedStyle(r.querySelector('.wx-live')).fontFamily === appFont,
+              monthWrap: [...r.querySelectorAll('.fp-months span')].some(n => n.getBoundingClientRect().height > 16) };
+          });
+          if (ui.removed || !ui.square || !ui.fits || !ui.dates || !ui.clock || ui.monthWrap) miss.push('home typography/layout ' + width + ': ' + JSON.stringify(ui));
+          if (footprintFont && footprintFont !== ui.font) miss.push('footprint font differs between themes');
+          footprintFont = ui.font;
+        }
+      }
       const shot = await cdp.send('Page.captureScreenshot', { format: 'png' });
       writeFileSync(join(OUT, `${name}-${theme}.png`), Buffer.from(shot.data, 'base64'));
     } catch (e) { miss = [`goto: ${e.message}`]; }

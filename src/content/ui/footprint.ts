@@ -21,19 +21,16 @@ const CHEV_L = '<path d="m14.5 6-6 6 6 6"/>', CHEV_R = '<path d="m9.5 6 6 6-6 6"
 export function createFootprintCard(): HTMLElement {
   const el = h('section', { class: 'fp-card', 'aria-label': 'B 站足迹' });
   const tip = h('div', { class: 'fp-tip', hidden: '' });
-  let note = '时长按页面可见且 90 秒内有操作、或正在播放时计算；满 1 分钟才算打开过';
 
   const refresh = async () => { try { paint(await loadActivity()); } catch { /* 扩展已重载 */ } };
   (async () => {
     await refresh();
     // 观看历史补全：每 6 小时最多一次
     const last = ((await chrome.storage.local.get(BF_KEY))[BF_KEY] as number | undefined) ?? 0;
-    if (Date.now() - last < 6 * 3600e3) { note = '没有本机记录的日子用 B 站观看历史估算'; return refresh(); }
+    if (Date.now() - last < 6 * 3600e3) { return; }
     const since = new Date(); since.setHours(0, 0, 0, 0); since.setDate(since.getDate() - 364 - since.getDay());
     const r = await backfill(since);
     if (r === 'ok') await chrome.storage.local.set({ [BF_KEY]: Date.now() });
-    note = r === 'ok' ? '没有本机记录的日子用 B 站观看历史估算（每条最多算 20 分钟）'
-      : r === 'nologin' ? '登录 B 站后可以用观看历史补全过去的天数' : '观看历史暂时读取失败，只显示本地记录';
     refresh();
   })();
   every(60_000, refresh); // 页面隐藏时不刷新
@@ -96,7 +93,6 @@ export function createFootprintCard(): HTMLElement {
       text('.fp-stat:nth-child(1) small', `${pLabel}首次打开`);
       text('.fp-stat:nth-child(2) small', `${pLabel}时长`);
       text('.fp-stat:last-child small', `当前连续 · 最长 ${best} 天`);
-      text('.fp-foot > span:first-child', note);
       el.querySelectorAll<HTMLElement>('.fp-day-b').forEach((b) => {
         const rec = data[b.dataset.k!];
         const l = b.hasAttribute('disabled') ? '0' : lv(rec);
@@ -116,10 +112,9 @@ export function createFootprintCard(): HTMLElement {
     renderedKey = key; renderedCells = cells;
     const weeks = Math.ceil(cells.length / 7);
     const stat = (v: string, label: string) => h('div', { class: 'fp-stat' }, h('b', {}, v), h('small', {}, label));
-    const legend = h('span', { class: 'fp-legend' }, '少', ...[0, 1, 2, 3, 4].map((l) => { const c = h('i', { class: 'fp-cell' }); c.dataset.l = String(l); return c; }), '多');
     const graph = h('div', { class: 'fp-graph' },
-      h('div', { class: 'fp-months', style: `width:calc(${weeks} * (var(--c) + var(--gp)))` },
-        ...months.map(([w, m]) => h('span', { style: `left:calc(${w} * (var(--c) + var(--gp)))` }, `${m}月`))),
+      h('div', { class: 'fp-months', style: `width:calc(${weeks} * var(--c) + ${weeks - 1} * var(--gp))` },
+        ...months.map(([w, m]) => h('span', { style: w > weeks - 3 ? 'right:0' : `left:calc(${w} * (var(--c) + var(--gp)))` }, `${m}月`))),
       h('div', { class: 'fp-days' }, ...['', '一', '', '三', '', '五', ''].map((x) => h('span', {}, x))),
       h('div', { class: 'fp-cells' }, ...cells),
     );
@@ -129,7 +124,7 @@ export function createFootprintCard(): HTMLElement {
     el.replaceChildren(
       h('div', { class: 'fp-side' },
         h('div', { class: 'fp-top' },
-          h('div', { class: 'eyebrow' }, h('span', { class: 'en' }, 'Footprint'), h('span', {}, view === 'year' ? '近一年' : '按月')),
+          h('div', { class: 'eyebrow' }, h('span', { class: 'en' }, 'Footprint')),
           seg),
         h('h3', { class: 'fp-head' }, `${active} 天打开过 B 站`),
         h('div', { class: 'fp-stats' },
@@ -137,13 +132,14 @@ export function createFootprintCard(): HTMLElement {
         stat(fmt(secondsOf(t)), `${pLabel}时长`),
         stat(fmt(total), '近一年累计'),
         stat(`${streak} 天`, `当前连续 · 最长 ${best} 天`))),
-      h('div', { class: 'fp-main' }, view === 'year' ? graph : monthView(data, today), h('div', { class: 'fp-foot' }, h('span', {}, note), legend)),
+      h('div', { class: 'fp-main' }, view === 'year' ? graph : monthView(data, today)),
       tip,
     );
     const fit = () => {
       tip.hidden = true;
-      const w = (graph.parentElement as HTMLElement).clientWidth;
-      const cs = Math.max(8, Math.min(18, Math.floor((w - 34) / weeks) - 3));
+      const w = graph.clientWidth;
+      // 预留周标签、列间距与今天描边；格子保持正方形，窄屏可横向滚动。
+      const cs = Math.max(7, Math.min(24, Math.floor(((w - 42 - (weeks - 1) * 3) / weeks) * 100) / 100));
       graph.style.setProperty('--c', `${cs}px`);
       graph.scrollLeft = graph.scrollWidth;
     };

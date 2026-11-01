@@ -154,7 +154,7 @@ export class MarginApp {
     const hero = heroS.el;
     // 汇流背景的点线汇向首页搜索栏
     this.bg.setFocus(hero);
-    const bar = h('div', { class: 'bar' }, h('div', { class: 'eyebrow' }, h('span', {}, todayLabel()), h('span', { class: 'en' }, 'For You'), h('span', { class: 'no' }, issueNo())), h('div', { class: 'bar-row' }, tabs, refresh));
+    const bar = h('div', { class: 'bar' }, h('div', { class: 'eyebrow' }, h('span', {}, todayLabel()), h('span', { class: 'en' }, 'For You')), h('div', { class: 'bar-row' }, tabs, refresh));
 
     this.grid = h('section', { class: 'grid', 'aria-live': 'polite' });
     this.status = h('div', { class: 'status' });
@@ -333,12 +333,6 @@ export class MarginApp {
       if (added === 0) window.setTimeout(() => { if (gen === this.gen) this.fillIfShort(); }, 1500);
     }
   }
-}
-
-/** 杂志刊号式的眉标：一年中的第几天 */
-function issueNo(): string {
-  const d = new Date(), y = new Date(d.getFullYear(), 0, 0);
-  return `NO. ${String(Math.floor((d.getTime() - y.getTime()) / 864e5)).padStart(3, '0')}`;
 }
 
 function todayLabel(): string {

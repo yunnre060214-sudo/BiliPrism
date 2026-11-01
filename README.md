@@ -1,12 +1,12 @@
 # BiliPrism 映棱
 
-Bilibili 网页端增强扩展，面向 Chrome 和 Microsoft Edge。当前版本 **0.1.0**，通过 GitHub Release 提供本地解压安装包。
+Bilibili 网页端增强扩展，面向 Chrome 和 Microsoft Edge。当前版本 **0.1.1**，通过 GitHub Release 提供本地解压安装包。
 
 以 MARGIN 0.39.0 为界面底座，保留首页、推荐、搜索、收藏、稍后再看、足迹及原生播放页适配。全站使用普通高斯模糊，背景使用静态渐变或本地图片，移除了 WebGL / WebGPU 背景与玻璃位移折射。默认关闭天气、开场和封面自动预览，字体直接使用系统字体。
 
 ## 下载与使用
 
-1. 在 [Releases](https://github.com/yunnre060214-sudo/BiliPrism/releases) 下载 `BiliPrism-v0.1.0-chromium.zip`，解压到固定文件夹。
+1. 在 [Releases](https://github.com/yunnre060214-sudo/BiliPrism/releases) 下载 `BiliPrism-v0.1.1-chromium.zip`，解压到固定文件夹。
 2. 打开 `chrome://extensions` 或 `edge://extensions`，开启开发者模式。
 3. 选择「加载已解压的扩展程序」，选择含 `manifest.json` 的文件夹。
 4. 停用其他接管 B 站界面的扩展与重复功能脚本，刷新 B 站。
