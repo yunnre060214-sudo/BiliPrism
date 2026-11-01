@@ -22,6 +22,9 @@ html.margin-watch[data-margin-theme="dark"]{
  --text4:#8b94a2!important;--brand_blue_thin:#153543!important;color-scheme:dark;
 }
 html.margin-watch body,html.margin-watch #app{background:var(--m-canvas)!important;color:var(--m-ink)}
+/* 与首页共用同一背景设置：只有开启背景时才让出视频页画布，保留原生播放器和卡片表面。 */
+html.margin-watch.margin-has-bg body{position:relative;z-index:1;background:transparent!important}
+html.margin-watch.margin-has-bg :is(#app,.video-container-v1,.left-container,.right-container){background:transparent!important}
 html.margin-watch :is(.video-info-container,.video-desc-container,.video-toolbar-container,.video-tag-container,.right-container,.up-panel-container,.up-info-container,.recommend-list-v1,.recommend-list-container,.comment-container,#commentapp){color:var(--m-ink)}
 html.margin-watch :is(.video-desc-container,.video-desc-container .basic-desc-info,.video-pod,.video-pod__header,.video-pod__body,.base-video-sections-v1,.video-sections-content-list,.danmaku-box,.bui-collapse-wrap,.bpx-player-sending-bar){background:var(--m-surface)!important;color:var(--m-ink)!important;border-color:var(--m-line)!important}
 html.margin-watch :is(.video-title,.recommend-list-v1 .title,.video-page-card-small .title,.up-info-container .up-name,.video-desc-container .desc-info-text,.video-pod .title-txt,.base-video-sections-v1 .title){color:var(--m-ink)!important}
@@ -29,4 +32,6 @@ html.margin-watch :is(.video-info-detail,.video-info-detail-list,.pubdate-ip-tex
 html.margin-watch :is(.video-title,.video-info-detail,.video-info-detail-list,.video-desc-container,.video-page-card-small .info,.up-info-container,.video-pod,.video-toolbar-container){font-family:var(--m-sans)!important;-webkit-font-smoothing:auto;text-rendering:auto}
 html.margin-watch :is(.video-info-detail,.video-info-detail-list,.pubdate-ip-text,.video-page-card-small .playinfo,.video-page-card-small .upname){font-size:var(--bp-meta-size,14px)!important;font-weight:var(--bp-font-weight,500)!important;line-height:1.5!important;letter-spacing:normal!important}
 html.margin-watch .video-desc-container .desc-info-text{font-size:var(--bp-font-size,15px)!important;font-weight:var(--bp-font-weight,500)!important;line-height:var(--bp-line-height,1.7)!important}
-#margin-bg{position:fixed;inset:0;z-index:-1;pointer-events:none}
+/* 背景挂在 html 下，与 body 同级；背景层 0、页面内容 1，避免负层级被 html 底色遮蔽。 */
+#margin-bg{position:fixed;inset:0;z-index:0;pointer-events:none}
+html.margin-watch:not(.margin-has-bg) #margin-bg{display:none!important}
